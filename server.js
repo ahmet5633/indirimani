@@ -2,7 +2,6 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const http = require('http');
-const https = require('https');
 const socketIo = require('socket.io');
 const axios = require('axios');
 const cheerio = require('cheerio');
@@ -13,58 +12,37 @@ require('dotenv').config();
 const app = express();
 const server = http.createServer(app);
 
-// Helmet güvenlik başlıkları
-app.use(helmet({
-    contentSecurityPolicy: false,
-    crossOriginEmbedderPolicy: false,
-    crossOriginResourcePolicy: { policy: "cross-origin" },
-    strictTransportSecurity: {
-        maxAge: 31536000,
-        includeSubDomains: true,
-        preload: true
-    }
-}));
+// Temel güvenlik ayarları
+app.use(helmet());
 
 // CORS ayarları
-const corsOptions = {
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-    credentials: true,
-    maxAge: 86400
-};
-
-app.use(cors(corsOptions));
+app.use(cors());
 
 // Trust proxy ayarı
 app.enable('trust proxy');
 
 // HTTPS yönlendirmesi
 app.use((req, res, next) => {
-    if (process.env.NODE_ENV === 'production') {
-        if (!req.secure && req.get('x-forwarded-proto') !== 'https') {
-            return res.redirect(301, `https://${req.headers.host}${req.url}`);
-        }
+    if (process.env.NODE_ENV === 'production' && req.headers['x-forwarded-proto'] !== 'https') {
+        return res.redirect(301, 'https://' + req.headers.host + req.url);
     }
     next();
 });
+
+// Statik dosyaları servis et
+app.use(express.static('public'));
+
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Socket.IO ayarları
 const io = socketIo(server, {
     cors: {
         origin: '*',
-        methods: ['GET', 'POST'],
-        credentials: true,
-        transports: ['websocket', 'polling']
-    },
-    allowEIO3: true,
-    pingTimeout: 60000,
-    transports: ['websocket', 'polling']
+        methods: ['GET', 'POST']
+    }
 });
-
-// Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 // MongoDB Bağlantısı
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://ahmetgecgin7:DbHaijd6rNC9fsIY@ahmet.mudps.mongodb.net/indirimani?retryWrites=true&w=majority&appName=ahmet';
@@ -273,55 +251,69 @@ async function checkPrices() {
         
         for (const product of products) {
             try {
-                // Mağazayı kontrol et
-                if (!product.link || 
-                    !(product.link.includes('hepsiburada.com') || 
-                      product.link.includes('trendyol.com') || 
-                      product.link.includes('amazon.com.tr'))) {
+                if (!product.link) {
+                    console.log(`Ürün linki bulunamadı: ${product.title}`);
                     continue;
                 }
+
+                // Mağazayı belirle
+                let store = 'Bilinmiyor';
+                let selectors = {};
                 
-                // HTTP isteği için farklı User-Agent'lar
-                const userAgents = [
-                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                    'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1',
-                    'Mozilla/5.0 (iPad; CPU OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1'
-                ];
+                if (product.link.includes('hepsiburada.com')) {
+                    store = 'Hepsiburada';
+                    selectors = {
+                        price: 'div[data-test-id="price-current-price"]',
+                        title: 'h1[itemprop="name"]'
+                    };
+                } else if (product.link.includes('trendyol.com')) {
+                    store = 'Trendyol';
+                    selectors = {
+                        price: '.prc-dsc',
+                        title: 'h1.pr-new-br'
+                    };
+                } else if (product.link.includes('amazon.com.tr')) {
+                    store = 'Amazon';
+                    selectors = {
+                        price: '.a-price-whole',
+                        title: '#productTitle'
+                    };
+                } else {
+                    console.log(`Desteklenmeyen mağaza: ${product.link}`);
+                    continue;
+                }
+
+                console.log(`Fiyat kontrol ediliyor: ${product.title} (${store})`);
                 
-                const randomUserAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
-                
-                // HTTP isteği
                 const response = await axios.get(product.link, {
                     headers: {
-                        'User-Agent': randomUserAgent,
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
                         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
                         'Accept-Language': 'tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7',
                         'Cache-Control': 'no-cache',
-                        'Pragma': 'no-cache',
-                        'Referer': 'https://www.google.com/'
+                        'Pragma': 'no-cache'
                     },
-                    timeout: 30000, // 30 saniye timeout
-                    maxRedirects: 5
+                    timeout: 10000,
+                    maxRedirects: 5,
+                    validateStatus: function (status) {
+                        return status >= 200 && status < 500;
+                    }
                 });
-                
-                const $ = cheerio.load(response.data);
-                
-                // Mağazaya göre farklı seçiciler kullan
-                let newPrice = null;
-                let title = null;
-                
-                if (product.link.includes('hepsiburada.com')) {
-                    newPrice = parseFloat($('span[data-bind="markupText:\'currentPriceBeforePoint\'"]').first().text().replace(/[^0-9,]/g, '').replace(',', '.'));
-                    title = $('h1[itemprop="name"]').text().trim();
-                } else if (product.link.includes('trendyol.com')) {
-                    newPrice = parseFloat($('span.prc-dsc').first().text().replace(/[^0-9,]/g, '').replace(',', '.'));
-                    title = $('h1.pr-new-br').text().trim();
-                } else if (product.link.includes('amazon.com.tr')) {
-                    newPrice = parseFloat($('span.a-price-whole').first().text().replace(/[^0-9,]/g, '').replace(',', '.'));
-                    title = $('#productTitle').text().trim();
+
+                if (response.status !== 200) {
+                    console.log(`${store} için HTTP ${response.status} hatası: ${product.title}`);
+                    continue;
                 }
-                
-                // Fiyatı güncelle
+
+                const $ = cheerio.load(response.data);
+                let newPrice = null;
+
+                // Fiyatı çek
+                const priceText = $(selectors.price).first().text().trim();
+                if (priceText) {
+                    newPrice = parseFloat(priceText.replace(/[^0-9,]/g, '').replace(',', '.'));
+                }
+
                 if (newPrice && !isNaN(newPrice) && newPrice > 0) {
                     const oldPrice = product.currentPrice;
                     product.currentPrice = newPrice;
@@ -329,34 +321,32 @@ async function checkPrices() {
                     product.lastUpdated = new Date();
                     await product.save();
 
+                    console.log(`Fiyat güncellendi: ${product.title} - ${oldPrice} TL -> ${newPrice} TL (${store})`);
+
                     // WebSocket ile bildirim gönder
                     io.emit('price_update', {
                         id: product._id,
                         title: product.title,
                         oldPrice: oldPrice,
                         newPrice: newPrice,
-                        discount: product.discount
+                        discount: product.discount,
+                        store: store
                     });
-                    
-                    console.log(`Fiyat güncellendi: ${product.title} - ${oldPrice} TL -> ${newPrice} TL`);
                 } else {
-                    console.log(`Fiyat bulunamadı veya geçersiz: ${product.title}`);
+                    console.log(`Geçerli fiyat bulunamadı: ${product.title} (${store})`);
                 }
 
-                // Her istek arasında rastgele bekleme süresi (2-5 saniye)
-                const delay = Math.floor(Math.random() * (5000 - 2000 + 1) + 2000);
-                await new Promise(resolve => setTimeout(resolve, delay));
+                // İstekler arası bekleme
+                await new Promise(resolve => setTimeout(resolve, 3000));
 
             } catch (error) {
-                console.error(`Ürün fiyatı kontrol edilirken hata: ${product.title}`, error.message);
-                // Hata durumunda daha uzun bir bekleme süresi (10-15 saniye)
-                const errorDelay = Math.floor(Math.random() * (15000 - 10000 + 1) + 10000);
-                await new Promise(resolve => setTimeout(resolve, errorDelay));
+                console.error(`Ürün fiyatı kontrol edilirken hata (${product.title}):`, error.message);
+                await new Promise(resolve => setTimeout(resolve, 5000));
             }
         }
         console.log('Fiyat kontrolü tamamlandı.');
     } catch (error) {
-        console.error('Fiyat kontrolü sırasında hata:', error);
+        console.error('Fiyat kontrolü sırasında genel hata:', error);
     }
 }
 
@@ -371,19 +361,6 @@ setTimeout(checkPrices, 5000); // 5 saniye sonra başlat
 app.get('/health', (req, res) => {
     res.status(200).json({ status: 'OK' });
 });
-
-// Statik dosyaları servis et (helmet'ten sonra olmalı)
-app.use('/', express.static('public', {
-    setHeaders: (res, path) => {
-        if (path.endsWith('.css')) {
-            res.setHeader('Content-Type', 'text/css');
-        } else if (path.endsWith('.js')) {
-            res.setHeader('Content-Type', 'application/javascript');
-        } else if (path.endsWith('.png') || path.endsWith('.jpg') || path.endsWith('.jpeg')) {
-            res.setHeader('Cache-Control', 'public, max-age=31536000');
-        }
-    }
-}));
 
 // Ana sayfayı yönlendir
 app.get('/', (req, res) => {
