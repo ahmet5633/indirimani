@@ -2,19 +2,34 @@ services:
   - type: web
     name: indirimani
     env: node
+    region: frankfurt
+    plan: free
     buildCommand: npm install
     startCommand: node server.js
-    autoDeploy: true
     healthCheckPath: /health
+    autoDeploy: true
     envVars:
-      - key: NODE_VERSION
-        value: 18.0.0
-      - key: PORT
-        value: 3000
       - key: NODE_ENV
         value: production
       - key: MONGODB_URI
         sync: false
     domains:
       - indirimani.onrender.com
-    sslCert: true 
+    headers:
+      - path: /*
+        name: Strict-Transport-Security
+        value: max-age=31536000; includeSubDomains
+      - path: /*
+        name: X-Frame-Options
+        value: SAMEORIGIN
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+    routes:
+      - type: redirect
+        source: /*
+        destination: https://indirimani.onrender.com/:splat
+        statusCode: 301
+    sslCert:
+      issuer: letsencrypt
+      renewBefore: 30d 

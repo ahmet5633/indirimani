@@ -15,42 +15,19 @@ const server = http.createServer(app);
 
 // Helmet güvenlik başlıkları
 app.use(helmet({
-    contentSecurityPolicy: {
-        directives: {
-            defaultSrc: ["'self'", "https:", "http:", "data:", "blob:", "wss:", "ws:"],
-            connectSrc: ["'self'", "wss://*", "ws://*", "https://*", "http://*"],
-            imgSrc: ["'self'", "data:", "https://*", "http://*", "blob:"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://*", "http://*"],
-            styleSrc: ["'self'", "'unsafe-inline'", "https://*", "http://*"],
-            fontSrc: ["'self'", "https://*", "http://*", "data:"],
-            objectSrc: ["'none'"],
-            mediaSrc: ["'self'", "https://*", "http://*"],
-            frameSrc: ["'self'", "https://*", "http://*"],
-            workerSrc: ["'self'", "blob:"],
-            childSrc: ["'self'", "blob:"],
-            formAction: ["'self'"],
-            upgradeInsecureRequests: null
-        },
-    },
+    contentSecurityPolicy: false,
     crossOriginEmbedderPolicy: false,
-    crossOriginResourcePolicy: { policy: "cross-origin" }
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    strictTransportSecurity: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true
+    }
 }));
 
 // CORS ayarları
 const corsOptions = {
-    origin: function (origin, callback) {
-        const allowedOrigins = [
-            'http://localhost:3000',
-            'https://localhost:3000',
-            'https://indirimani.onrender.com',
-            'https://www.indirimani.onrender.com'
-        ];
-        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-            callback(null, true);
-        } else {
-            callback(null, true); // Geliştirme aşamasında tüm originlere izin ver
-        }
-    },
+    origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
     credentials: true,
@@ -60,13 +37,13 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // Trust proxy ayarı
-app.set('trust proxy', true);
+app.enable('trust proxy');
 
 // HTTPS yönlendirmesi
 app.use((req, res, next) => {
     if (process.env.NODE_ENV === 'production') {
-        if (req.headers['x-forwarded-proto'] !== 'https') {
-            return res.redirect('https://' + req.headers.host + req.url);
+        if (!req.secure && req.get('x-forwarded-proto') !== 'https') {
+            return res.redirect(301, `https://${req.headers.host}${req.url}`);
         }
     }
     next();
