@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>İndiriMania - Yönetim Paneli</title>
+    <link rel="stylesheet" href="admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1>İndiriMania Yönetim</h1>
+                <p>İndirim Takip Sistemi</p>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="index.html" target="_blank">Siteyi Görüntüle</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="admin-panel">
+            <div class="panel-header">
+                <h2>Ürün Yönetimi</h2>
+                <button id="add-product-btn" class="btn primary-btn"><i class="fas fa-plus"></i> Yeni Ürün Ekle</button>
+            </div>
+
+            <div class="panel-content">
+                <div class="product-filters">
+                    <input type="text" id="search-products" placeholder="Ürün ara...">
+                    <select id="category-filter">
+                        <option value="all">Tüm Kategoriler</option>
+                        <option value="elektronik">Elektronik</option>
+                        <option value="giyim">Giyim</option>
+                        <option value="ev">Ev & Yaşam</option>
+                        <option value="kozmetik">Kozmetik</option>
+                        <option value="kitap">Kitap & Hobi</option>
+                    </select>
+                    <select id="store-filter">
+                        <option value="all">Tüm Mağazalar</option>
+                        <option value="Hepsiburada">Hepsiburada</option>
+                        <option value="Trendyol">Trendyol</option>
+                        <option value="Amazon">Amazon</option>
+                        <option value="MediaMarkt">MediaMarkt</option>
+                        <option value="Teknosa">Teknosa</option>
+                    </select>
+                </div>
+
+                <div class="products-table-container">
+                    <table id="products-table">
+                        <thead>
+                            <tr>
+                                <th>Ürün</th>
+                                <th>Fiyat</th>
+                                <th>İndirim</th>
+                                <th>Kategori</th>
+                                <th>Mağaza</th>
+                                <th>Son Güncelleme</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody id="products-list">
+                            <!-- Ürün listesi JS ile doldurulacak -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Ürün Ekleme/Düzenleme Modal -->
+    <div id="product-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3 id="modal-title">Yeni Ürün Ekle</h3>
+            
+            <form id="product-form">
+                <input type="hidden" id="product-id">
+                
+                <div class="form-group">
+                    <label for="product-title">Ürün Adı:</label>
+                    <input type="text" id="product-title" required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="product-current-price">Mevcut Fiyat (TL):</label>
+                        <input type="number" id="product-current-price" min="0" step="0.01" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="product-original-price">Orijinal Fiyat (TL):</label>
+                        <input type="number" id="product-original-price" min="0" step="0.01" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="product-category">Kategori:</label>
+                        <select id="product-category" required>
+                            <option value="">Seçiniz</option>
+                            <option value="elektronik">Elektronik</option>
+                            <option value="giyim">Giyim</option>
+                            <option value="ev">Ev & Yaşam</option>
+                            <option value="kozmetik">Kozmetik</option>
+                            <option value="kitap">Kitap & Hobi</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="product-store">Mağaza:</label>
+                        <select id="product-store" required>
+                            <option value="">Seçiniz</option>
+                            <option value="Hepsiburada">Hepsiburada</option>
+                            <option value="Trendyol">Trendyol</option>
+                            <option value="Amazon">Amazon</option>
+                            <option value="MediaMarkt">MediaMarkt</option>
+                            <option value="Teknosa">Teknosa</option>
+                            <option value="Diğer">Diğer</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="product-image">Ürün Resmi URL:</label>
+                    <input type="url" id="product-image" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="product-link">Ürün Linki:</label>
+                    <input type="url" id="product-link" required>
+                </div>
+                
+                <div class="form-buttons">
+                    <button type="button" id="manual-scrape" class="btn secondary-btn">Fiyatları Çek</button>
+                    <button type="submit" class="btn primary-btn">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html> 

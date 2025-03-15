@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>İndiriMania - Gerçek Zamanlı İndirim Takip Platformu</title>
+    <meta name="description" content="İndiriMania ile en güncel indirimleri takip edin, fiyat değişimlerinden anında haberdar olun!">
+    
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="/style.css">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container header-container">
+            <div class="logo">
+                <img src="/logo.png" alt="İndiriMania Logo">
+                <h1>İndiri<span>Mania</span></h1>
+            </div>
+            
+            <div class="search-box">
+                <input type="text" placeholder="Ürün, marka veya kategori ara...">
+                <button type="submit"><i class="fas fa-search"></i></button>
+            </div>
+            
+            <div class="nav-links">
+                <a href="/" class="active"><i class="fas fa-home"></i> Ana Sayfa</a>
+                <a href="/populer"><i class="fas fa-fire"></i> Popüler</a>
+                <button id="notification-btn" class="notification-btn">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Ana İçerik -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Başlık -->
+            <h2 class="section-title"><i class="fas fa-tags"></i> Günün İndirimleri</h2>
+            
+            <!-- Filtreler -->
+            <div class="filters">
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-filter="all">Tümü</button>
+                    <button class="filter-btn" data-filter="elektronik">Elektronik</button>
+                    <button class="filter-btn" data-filter="giyim">Giyim</button>
+                    <button class="filter-btn" data-filter="ev">Ev & Yaşam</button>
+                    <button class="filter-btn" data-filter="kozmetik">Kozmetik</button>
+                    <button class="filter-btn" data-filter="kitap">Kitap & Hobi</button>
+                    <button class="filter-btn" data-filter="market">Süpermarket</button>
+                    <button class="filter-btn" data-filter="spor">Spor & Outdoor</button>
+                </div>
+                
+                <div class="sort-options">
+                    <label for="sort">Sırala:</label>
+                    <select id="sort">
+                        <option value="newest">En Yeni</option>
+                        <option value="discount">En Yüksek İndirim</option>
+                        <option value="price-low">Fiyat (Düşükten Yükseğe)</option>
+                        <option value="price-high">Fiyat (Yüksekten Düşüğe)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- İndirim Kartları -->
+            <div id="deals-container" class="deals-container">
+                <!-- JavaScript ile doldurulacak -->
+                <div class="no-deals">Yükleniyor...</div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Bildirim Modalı -->
+    <div id="notification-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            
+            <div class="modal-header">
+                <h2>Bildirim Ayarları</h2>
+            </div>
+            
+            <div class="notification-settings">
+                <div class="notification-status">
+                    <p id="notification-status-text">Fiyat değişimlerinden anında haberdar olmak için bildirimleri etkinleştirin.</p>
+                    <button id="enable-notifications">Bildirimleri Etkinleştir</button>
+                </div>
+                
+                <h3>Bildirim Tercihleri</h3>
+                
+                <div class="settings-group">
+                    <label for="discount-threshold">Minimum İndirim Oranı:</label>
+                    <select id="discount-threshold">
+                        <option value="10">%10 ve üzeri</option>
+                        <option value="20">%20 ve üzeri</option>
+                        <option value="30">%30 ve üzeri</option>
+                        <option value="40" selected>%40 ve üzeri</option>
+                        <option value="50">%50 ve üzeri</option>
+                    </select>
+                </div>
+                
+                <div class="settings-group">
+                    <label>Bildirim Kategorileri:</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="cat-all" checked>
+                            <label for="cat-all">Tümü</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="cat-elektronik">
+                            <label for="cat-elektronik">Elektronik</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="cat-giyim">
+                            <label for="cat-giyim">Giyim</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="cat-ev">
+                            <label for="cat-ev">Ev & Yaşam</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="cat-kozmetik">
+                            <label for="cat-kozmetik">Kozmetik</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="cat-kitap">
+                            <label for="cat-kitap">Kitap & Hobi</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="notification-list-container">
+                <h3>Son Bildirimler</h3>
+                <div id="notification-list" class="notification-list">
+                    <div class="empty-notification">Henüz bildirim bulunmuyor.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer>
+        <div class="container footer-container">
+            <div class="footer-section">
+                <h3>İndiriMania</h3>
+                <p>İndiriMania, Türkiye'nin önde gelen e-ticaret sitelerindeki indirimleri anlık olarak takip eden ve kullanıcılarına bildiren bir platformdur.</p>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                </div>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Hızlı Erişim</h3>
+                <ul class="footer-links">
+                    <li><a href="/">Ana Sayfa</a></li>
+                    <li><a href="/populer">Popüler İndirimler</a></li>
+                    <li><a href="/yeni">Yeni Eklenenler</a></li>
+                    <li><a href="/magazalar">Mağazalar</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Kategoriler</h3>
+                <ul class="footer-links">
+                    <li><a href="/kategori/elektronik">Elektronik</a></li>
+                    <li><a href="/kategori/giyim">Giyim</a></li>
+                    <li><a href="/kategori/ev">Ev & Yaşam</a></li>
+                    <li><a href="/kategori/kozmetik">Kozmetik</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Yardım & Destek</h3>
+                <ul class="footer-links">
+                    <li><a href="/hakkimizda">Hakkımızda</a></li>
+                    <li><a href="/iletisim">İletişim</a></li>
+                    <li><a href="/sss">Sık Sorulan Sorular</a></li>
+                    <li><a href="/gizlilik">Gizlilik Politikası</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="copyright">
+            &copy; 2023 İndiriMania. Tüm hakları saklıdır.
+        </div>
+    </footer>
+    
+    <!-- JavaScript -->
+    <script src="/script.js"></script>
+</body>
+</html> 
+</html> 

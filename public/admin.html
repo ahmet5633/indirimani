@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>İndiriMania - Admin Paneli</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="/admin.css">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="admin-header">
+        <div class="header-container">
+            <div class="logo">
+                <h1>İndiriMania <span>Admin</span></h1>
+            </div>
+            
+            <div class="admin-nav">
+                <a href="/admin" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                <a href="/admin/products"><i class="fas fa-tags"></i> Ürünler</a>
+                <a href="/admin/stores"><i class="fas fa-store"></i> Mağazalar</a>
+                <a href="/admin/settings"><i class="fas fa-cog"></i> Ayarlar</a>
+                <a href="/" target="_blank"><i class="fas fa-external-link-alt"></i> Siteyi Görüntüle</a>
+            </div>
+            
+            <div class="admin-user">
+                <span class="user-name">Admin</span>
+                <a href="/logout" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Çıkış</a>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Ana İçerik -->
+    <main class="admin-content">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h3>Yönetim Paneli</h3>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="active">
+                        <a href="/admin"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                    </li>
+                    <li>
+                        <a href="/admin/products"><i class="fas fa-tags"></i> Ürünler</a>
+                    </li>
+                    <li>
+                        <a href="/admin/stores"><i class="fas fa-store"></i> Mağazalar</a>
+                    </li>
+                    <li>
+                        <a href="/admin/categories"><i class="fas fa-list"></i> Kategoriler</a>
+                    </li>
+                    <li>
+                        <a href="/admin/scraper"><i class="fas fa-spider"></i> Scraper</a>
+                    </li>
+                    <li>
+                        <a href="/admin/users"><i class="fas fa-users"></i> Kullanıcılar</a>
+                    </li>
+                    <li>
+                        <a href="/admin/settings"><i class="fas fa-cog"></i> Ayarlar</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+        
+        <div class="content-area">
+            <div class="page-header">
+                <h2>Ürün Yönetimi</h2>
+                <div class="page-actions">
+                    <button id="add-product-btn" class="btn btn-primary"><i class="fas fa-plus"></i> Yeni Ürün Ekle</button>
+                    <button id="refresh-btn" class="btn btn-secondary"><i class="fas fa-sync-alt"></i> Yenile</button>
+                </div>
+            </div>
+            
+            <div class="dashboard-stats">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-tags"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Toplam Ürün</h3>
+                        <p id="total-products">0</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-percent"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Ortalama İndirim</h3>
+                        <p id="avg-discount">%0</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-store"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Aktif Mağaza</h3>
+                        <p id="active-stores">0</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Son Güncelleme</h3>
+                        <p id="last-update">-</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="filter-section">
+                <div class="search-box">
+                    <input type="text" id="search-product" placeholder="Ürün ara...">
+                    <button><i class="fas fa-search"></i></button>
+                </div>
+                
+                <div class="filter-group">
+                    <select id="category-filter">
+                        <option value="">Tüm Kategoriler</option>
+                        <option value="elektronik">Elektronik</option>
+                        <option value="giyim">Giyim</option>
+                        <option value="ev">Ev & Yaşam</option>
+                        <option value="kozmetik">Kozmetik</option>
+                        <option value="kitap">Kitap & Hobi</option>
+                        <option value="market">Süpermarket</option>
+                        <option value="spor">Spor & Outdoor</option>
+                    </select>
+                    
+                    <select id="store-filter">
+                        <option value="">Tüm Mağazalar</option>
+                        <option value="trendyol">Trendyol</option>
+                        <option value="hepsiburada">Hepsiburada</option>
+                        <option value="amazon">Amazon</option>
+                        <option value="n11">N11</option>
+                        <option value="teknosa">Teknosa</option>
+                    </select>
+                    
+                    <select id="discount-filter">
+                        <option value="">Tüm İndirimler</option>
+                        <option value="10">%10 ve üzeri</option>
+                        <option value="20">%20 ve üzeri</option>
+                        <option value="30">%30 ve üzeri</option>
+                        <option value="40">%40 ve üzeri</option>
+                        <option value="50">%50 ve üzeri</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="product-table-container">
+                <table class="product-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Ürün</th>
+                            <th>Kategori</th>
+                            <th>Mağaza</th>
+                            <th>Güncel Fiyat</th>
+                            <th>Eski Fiyat</th>
+                            <th>İndirim</th>
+                            <th>Son Güncelleme</th>
+                            <th>İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody id="product-list">
+                        <!-- Ürünler JavaScript ile eklenecek -->
+                        <tr>
+                            <td colspan="9" class="empty-table">Yükleniyor...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="pagination">
+                <button id="prev-page" class="btn btn-sm" disabled><i class="fas fa-chevron-left"></i> Önceki</button>
+                <span id="page-info">Sayfa 1 / 1</span>
+                <button id="next-page" class="btn btn-sm" disabled>Sonraki <i class="fas fa-chevron-right"></i></button>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Ürün Ekleme/Düzenleme Modalı -->
+    <div id="product-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            
+            <div class="modal-header">
+                <h2 id="modal-title">Yeni Ürün Ekle</h2>
+            </div>
+            
+            <form id="product-form">
+                <input type="hidden" id="product-id">
+                
+                <div class="form-group">
+                    <label for="product-title">Ürün Adı</label>
+                    <input type="text" id="product-title" required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="product-category">Kategori</label>
+                        <select id="product-category" required>
+                            <option value="">Kategori Seçin</option>
+                            <option value="elektronik">Elektronik</option>
+                            <option value="giyim">Giyim</option>
+                            <option value="ev">Ev & Yaşam</option>
+                            <option value="kozmetik">Kozmetik</option>
+                            <option value="kitap">Kitap & Hobi</option>
+                            <option value="market">Süpermarket</option>
+                            <option value="spor">Spor & Outdoor</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="product-store">Mağaza</label>
+                        <select id="product-store" required>
+                            <option value="">Mağaza Seçin</option>
+                            <option value="trendyol">Trendyol</option>
+                            <option value="hepsiburada">Hepsiburada</option>
+                            <option value="amazon">Amazon</option>
+                            <option value="n11">N11</option>
+                            <option value="teknosa">Teknosa</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="product-current-price">Güncel Fiyat (TL)</label>
+                        <input type="number" id="product-current-price" min="0" step="0.01" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="product-original-price">Orijinal Fiyat (TL)</label>
+                        <input type="number" id="product-original-price" min="0" step="0.01" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="product-image">Ürün Görseli URL</label>
+                    <input type="url" id="product-image" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="product-link">Ürün Linki</label>
+                    <input type="url" id="product-link" required>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" id="cancel-btn" class="btn btn-secondary">İptal</button>
+                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Silme Onay Modalı -->
+    <div id="delete-modal" class="modal">
+        <div class="modal-content modal-sm">
+            <span class="close">&times;</span>
+            
+            <div class="modal-header">
+                <h2>Ürünü Sil</h2>
+            </div>
+            
+            <div class="modal-body">
+                <p>Bu ürünü silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.</p>
+            </div>
+            
+            <div class="modal-footer">
+                <button id="delete-cancel" class="btn btn-secondary">İptal</button>
+                <button id="delete-confirm" class="btn btn-danger">Sil</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- JavaScript -->
+    <script src="/admin.js"></script>
+</body>
+</html> 

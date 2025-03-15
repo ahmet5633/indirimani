@@ -1,0 +1,765 @@
+/* İndiriMania Ana Stil Dosyası */
+
+:root {
+    --primary-color: #ff4757;
+    --secondary-color: #2f3542;
+    --accent-color: #ff6b81;
+    --light-color: #f1f2f6;
+    --dark-color: #2f3542;
+    --success-color: #2ed573;
+    --warning-color: #ffa502;
+    --danger-color: #ff4757;
+    --gray-color: #a4b0be;
+    --border-radius: 8px;
+    --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --transition: all 0.3s ease;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+    color: var(--dark-color);
+    line-height: 1.6;
+}
+
+a {
+    text-decoration: none;
+    color: var(--primary-color);
+    transition: var(--transition);
+}
+
+a:hover {
+    color: var(--accent-color);
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Header Stili */
+header {
+    background-color: #fff;
+    box-shadow: var(--box-shadow);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+}
+
+.logo img {
+    height: 40px;
+    margin-right: 10px;
+}
+
+.logo h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.logo span {
+    color: var(--secondary-color);
+}
+
+.search-box {
+    flex: 1;
+    max-width: 500px;
+    margin: 0 20px;
+    position: relative;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 12px 20px;
+    border: 1px solid #dfe4ea;
+    border-radius: var(--border-radius);
+    font-size: 14px;
+    transition: var(--transition);
+}
+
+.search-box input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(255, 71, 87, 0.1);
+}
+
+.search-box button {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--gray-color);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.search-box button:hover {
+    color: var(--primary-color);
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+}
+
+.nav-links a {
+    margin-left: 20px;
+    font-weight: 500;
+    color: var(--secondary-color);
+    position: relative;
+}
+
+.nav-links a:hover {
+    color: var(--primary-color);
+}
+
+.notification-btn {
+    position: relative;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--secondary-color);
+    transition: var(--transition);
+}
+
+.notification-btn:hover {
+    color: var(--primary-color);
+}
+
+.notification-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background-color: var(--primary-color);
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Ana İçerik */
+.main-content {
+    padding: 30px 0;
+}
+
+.section-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: var(--secondary-color);
+    display: flex;
+    align-items: center;
+}
+
+.section-title i {
+    margin-right: 10px;
+    color: var(--primary-color);
+}
+
+/* Filtreler */
+.filters {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    background-color: #fff;
+    padding: 15px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+}
+
+.filter-buttons {
+    display: flex;
+    overflow-x: auto;
+    padding-bottom: 5px;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.filter-buttons::-webkit-scrollbar {
+    display: none;
+}
+
+.filter-btn {
+    background: none;
+    border: none;
+    padding: 8px 15px;
+    margin-right: 10px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--secondary-color);
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+}
+
+.filter-btn:hover {
+    background-color: rgba(255, 71, 87, 0.1);
+    color: var(--primary-color);
+}
+
+.filter-btn.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.sort-options {
+    display: flex;
+    align-items: center;
+}
+
+.sort-options label {
+    margin-right: 10px;
+    font-size: 14px;
+    color: var(--gray-color);
+}
+
+.sort-options select {
+    padding: 8px 15px;
+    border: 1px solid #dfe4ea;
+    border-radius: var(--border-radius);
+    font-size: 14px;
+    color: var(--secondary-color);
+    background-color: white;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.sort-options select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+/* İndirim Kartları */
+.deals-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.deal-card {
+    background-color: white;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: var(--box-shadow);
+    transition: var(--transition);
+}
+
+.deal-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.deal-image {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+}
+
+.deal-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.deal-card:hover .deal-image img {
+    transform: scale(1.05);
+}
+
+.discount-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: var(--primary-color);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.store-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: var(--secondary-color);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.deal-content {
+    padding: 15px;
+}
+
+.deal-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: var(--secondary-color);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    height: 48px;
+}
+
+.deal-price {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.current-price {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-right: 10px;
+}
+
+.original-price {
+    font-size: 14px;
+    color: var(--gray-color);
+    text-decoration: line-through;
+}
+
+.deal-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    background-color: #f8f9fa;
+    border-top: 1px solid #f1f2f6;
+}
+
+.deal-time {
+    font-size: 12px;
+    color: var(--gray-color);
+}
+
+.deal-link {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+}
+
+.deal-link i {
+    margin-left: 5px;
+    transition: transform 0.3s ease;
+}
+
+.deal-link:hover i {
+    transform: translateX(3px);
+}
+
+.no-deals {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 50px 0;
+    color: var(--gray-color);
+    font-size: 18px;
+}
+
+/* Bildirim Modalı */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    background-color: white;
+    margin: 10% auto;
+    padding: 20px;
+    border-radius: var(--border-radius);
+    max-width: 500px;
+    box-shadow: var(--box-shadow);
+    position: relative;
+}
+
+.close {
+    position: absolute;
+    right: 20px;
+    top: 15px;
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--gray-color);
+    cursor: pointer;
+}
+
+.close:hover {
+    color: var(--primary-color);
+}
+
+.modal-header {
+    margin-bottom: 20px;
+}
+
+.modal-header h2 {
+    font-size: 20px;
+    color: var(--secondary-color);
+}
+
+.notification-settings {
+    margin-bottom: 20px;
+}
+
+.notification-settings h3 {
+    font-size: 16px;
+    margin-bottom: 10px;
+    color: var(--secondary-color);
+}
+
+.notification-status {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: var(--border-radius);
+    margin-bottom: 15px;
+}
+
+#notification-status-text {
+    font-size: 14px;
+    color: var(--gray-color);
+    margin-bottom: 10px;
+}
+
+#enable-notifications {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: var(--border-radius);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+#enable-notifications:hover {
+    background-color: var(--accent-color);
+}
+
+#enable-notifications:disabled {
+    background-color: var(--success-color);
+    cursor: not-allowed;
+}
+
+.settings-group {
+    margin-bottom: 15px;
+}
+
+.settings-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 14px;
+    color: var(--secondary-color);
+}
+
+.settings-group select {
+    width: 100%;
+    padding: 8px 15px;
+    border: 1px solid #dfe4ea;
+    border-radius: var(--border-radius);
+    font-size: 14px;
+    color: var(--secondary-color);
+    background-color: white;
+}
+
+.checkbox-group {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+}
+
+.checkbox-item input {
+    margin-right: 5px;
+}
+
+.checkbox-item label {
+    font-size: 14px;
+    color: var(--secondary-color);
+}
+
+.notification-list-container {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-top: 20px;
+}
+
+.notification-list-container h3 {
+    font-size: 16px;
+    margin-bottom: 10px;
+    color: var(--secondary-color);
+}
+
+.notification-list {
+    background-color: #f8f9fa;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+.notification-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #f1f2f6;
+    transition: var(--transition);
+}
+
+.notification-item:hover {
+    background-color: #f1f2f6;
+}
+
+.notification-item:last-child {
+    border-bottom: none;
+}
+
+.notification-info {
+    flex: 1;
+}
+
+.notification-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--secondary-color);
+    margin-bottom: 5px;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.notification-price {
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.notification-price .price-change {
+    color: var(--success-color);
+    font-weight: 500;
+}
+
+.notification-time {
+    font-size: 12px;
+    color: var(--gray-color);
+}
+
+.notification-action a {
+    font-size: 14px;
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+}
+
+.notification-action a i {
+    margin-left: 5px;
+}
+
+.empty-notification {
+    padding: 20px;
+    text-align: center;
+    color: var(--gray-color);
+}
+
+/* Footer */
+footer {
+    background-color: var(--secondary-color);
+    color: white;
+    padding: 40px 0 20px;
+}
+
+.footer-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 30px;
+}
+
+.footer-section h3 {
+    font-size: 18px;
+    margin-bottom: 15px;
+    color: white;
+}
+
+.footer-section p {
+    font-size: 14px;
+    color: #a4b0be;
+    margin-bottom: 10px;
+}
+
+.footer-links {
+    list-style: none;
+}
+
+.footer-links li {
+    margin-bottom: 10px;
+}
+
+.footer-links a {
+    color: #a4b0be;
+    font-size: 14px;
+    transition: var(--transition);
+}
+
+.footer-links a:hover {
+    color: white;
+}
+
+.social-links {
+    display: flex;
+    margin-top: 15px;
+}
+
+.social-links a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    margin-right: 10px;
+    color: white;
+    transition: var(--transition);
+}
+
+.social-links a:hover {
+    background-color: var(--primary-color);
+    transform: translateY(-3px);
+}
+
+.copyright {
+    text-align: center;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 14px;
+    color: #a4b0be;
+}
+
+/* Duyarlı Tasarım */
+@media (max-width: 992px) {
+    .header-container {
+        flex-wrap: wrap;
+    }
+    
+    .logo {
+        margin-bottom: 10px;
+    }
+    
+    .search-box {
+        order: 3;
+        max-width: 100%;
+        margin: 10px 0 0;
+    }
+    
+    .deals-container {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .filters {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .filter-buttons {
+        margin-bottom: 15px;
+        width: 100%;
+    }
+    
+    .sort-options {
+        width: 100%;
+    }
+    
+    .sort-options select {
+        width: 100%;
+    }
+    
+    .deals-container {
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    }
+    
+    .modal-content {
+        width: 90%;
+        margin: 20% auto;
+    }
+    
+    .checkbox-group {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 576px) {
+    .header-container {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .nav-links {
+        margin-top: 15px;
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .nav-links a {
+        margin-left: 0;
+    }
+    
+    .deals-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .deal-image {
+        height: 180px;
+    }
+    
+    .footer-container {
+        grid-template-columns: 1fr;
+    }
+} 
