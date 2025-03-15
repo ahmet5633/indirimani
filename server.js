@@ -12,25 +12,42 @@ require('dotenv').config();
 const app = express();
 const server = http.createServer(app);
 
-// Temel güvenlik ayarları
-app.use(helmet());
+// Güvenlik ayarları
+app.use(helmet({
+    contentSecurityPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: { policy: "unsafe-none" }
+}));
 
 // CORS ayarları
-app.use(cors());
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // Trust proxy ayarı
 app.enable('trust proxy');
 
 // HTTPS yönlendirmesi
-app.use((req, res, next) => {
-    if (process.env.NODE_ENV === 'production' && req.headers['x-forwarded-proto'] !== 'https') {
-        return res.redirect(301, 'https://' + req.headers.host + req.url);
-    }
-    next();
-});
+if (process.env.NODE_ENV === 'production') {
+    app.use((req, res, next) => {
+        if (!req.secure && req.get('x-forwarded-proto') !== 'https') {
+            return res.redirect('https://' + req.get('host') + req.url);
+        }
+        next();
+    });
+}
 
 // Statik dosyaları servis et
-app.use(express.static('public'));
+app.use(express.static('public', {
+    setHeaders: (res, path) => {
+        if (path.endsWith('.html')) {
+            res.setHeader('Cache-Control', 'no-cache');
+        }
+    }
+}));
 
 // Middleware
 app.use(express.json());
