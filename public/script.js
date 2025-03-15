@@ -1,41 +1,168 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Mobil menü işlevselliği
+    const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+    const navMenu = document.getElementById('nav-menu');
+
+    if (mobileMenuBtn) {
+        mobileMenuBtn.addEventListener('click', () => {
+            navMenu.classList.toggle('show');
+            mobileMenuBtn.querySelector('i').classList.toggle('fa-bars');
+            mobileMenuBtn.querySelector('i').classList.toggle('fa-times');
+        });
+    }
+
     // WebSocket bağlantısı - dinamik URL
     const socketProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const socketUrl = `${socketProtocol}//${window.location.host}`;
-    const socket = io(socketUrl);
+    const socket = io(socketUrl, {
+        transports: ['websocket', 'polling'],
+        reconnectionAttempts: Infinity,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        timeout: 20000
+    });
     
     // Bildirim değişkenleri
     let notificationsEnabled = false;
     
-    // Ürünleri API'den çek
-    async function fetchProducts() {
-        try {
-            const response = await fetch('/api/products');
-            const products = await response.json();
-            displayDeals(products);
-        } catch (error) {
-            console.error('Ürünler yüklenirken hata:', error);
+    // Bildirim izni kontrolü ve isteme
+    async function checkAndRequestNotifications() {
+        if ('Notification' in window) {
+            if (Notification.permission === 'granted') {
+                notificationsEnabled = true;
+            } else if (Notification.permission !== 'denied') {
+                const permission = await Notification.requestPermission();
+                notificationsEnabled = permission === 'granted';
+            }
         }
     }
 
-    // WebSocket olaylarını dinle
-    socket.on('price_update', (data) => {
-        // Bildirim göster
-        if (notificationsEnabled && Notification.permission === "granted") {
-            showNotification(
-                "Fiyat Değişimi!",
-                `${data.title} ürününün fiyatı ${data.oldPrice} TL'den ${data.newPrice} TL'ye düştü! (%${data.discount} indirim)`
-            );
-            
-            // Uygulama içi bildirim ekle
-            addNotificationToList(data);
+    // Bildirim gösterme fonksiyonu
+    function showNotification(title, body) {
+        if (notificationsEnabled) {
+            try {
+                const notification = new Notification(title, {
+                    body: body,
+                    icon: '/favicon.ico',
+                    badge: '/favicon.ico',
+                    vibrate: [200, 100, 200]
+                });
+
+                notification.onclick = function() {
+                    window.focus();
+                    this.close();
+                };
+            } catch (error) {
+                console.error('Bildirim gösterilirken hata:', error);
+            }
+        }
+    }
+
+    // Bildirim butonunu ayarla
+    const notificationBtn = document.getElementById('notification-btn');
+    if (notificationBtn) {
+        notificationBtn.addEventListener('click', async () => {
+            await checkAndRequestNotifications();
+            if (notificationsEnabled) {
+                showNotification('Bildirimler Aktif', 'Artık fiyat değişikliklerinden haberdar olacaksınız!');
+            }
+        });
+    }
+
+    // Sayfa yüklendiğinde bildirim iznini kontrol et
+    checkAndRequestNotifications();
+
+    // WebSocket bağlantı durumu kontrolü
+    socket.on('connect', () => {
+        console.log('Sunucuya bağlandı');
+        showConnectionStatus('online');
+    });
+
+    socket.on('disconnect', () => {
+        console.log('Sunucu bağlantısı kesildi');
+        showConnectionStatus('offline');
+    });
+
+    socket.on('connect_error', (error) => {
+        console.error('Bağlantı hatası:', error);
+        showConnectionStatus('error');
+    });
+
+    // Bağlantı durumu göstergesi
+    function showConnectionStatus(status) {
+        const statusIndicator = document.createElement('div');
+        statusIndicator.className = `connection-status ${status}`;
+        
+        let message = '';
+        switch(status) {
+            case 'online':
+                message = 'Sunucu bağlantısı aktif';
+                break;
+            case 'offline':
+                message = 'Sunucu bağlantısı kesildi, yeniden bağlanılıyor...';
+                break;
+            case 'error':
+                message = 'Bağlantı hatası oluştu, tekrar deneniyor...';
+                break;
         }
         
+        statusIndicator.textContent = message;
+        
+        // Varolan status göstergesini kaldır
+        const existingStatus = document.querySelector('.connection-status');
+        if (existingStatus) {
+            existingStatus.remove();
+        }
+        
+        // Yeni status göstergesini ekle
+        document.body.appendChild(statusIndicator);
+        
+        // Status offline değilse 3 saniye sonra göstergeyi kaldır
+        if (status === 'online') {
+            setTimeout(() => statusIndicator.remove(), 3000);
+        }
+    }
+
+    // Fiyat güncellemelerini dinle
+    socket.on('price_update', (data) => {
+        if (notificationsEnabled) {
+            showNotification(
+                'Fiyat Değişimi!',
+                `${data.title} ürününün fiyatı ${data.oldPrice} TL'den ${data.newPrice} TL'ye düştü! (%${data.discount} indirim)`
+            );
+        }
         // Ürün listesini güncelle
         fetchProducts();
     });
 
-    // Kategoriye göre ürünleri getir
+    // Ürünleri getir ve görüntüle
+    async function fetchProducts() {
+        try {
+            const response = await fetch('/api/products');
+            if (!response.ok) {
+                throw new Error('Ürünler yüklenirken bir hata oluştu');
+            }
+            const products = await response.json();
+            displayProducts(products);
+        } catch (error) {
+            console.error('Ürünler yüklenirken hata:', error);
+            showError('Ürünler yüklenirken bir hata oluştu. Lütfen sayfayı yenileyin.');
+        }
+    }
+
+    // Hata mesajı gösterme
+    function showError(message) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-message';
+        errorDiv.textContent = message;
+        document.body.insertBefore(errorDiv, document.body.firstChild);
+        setTimeout(() => errorDiv.remove(), 5000);
+    }
+
+    // Sayfa yüklendiğinde ürünleri getir
+    fetchProducts();
+
+    // Ürünleri API'den çek
     async function fetchProductsByCategory(category) {
         try {
             const response = await fetch(`/api/products/${category}`);
@@ -143,9 +270,6 @@ document.addEventListener('DOMContentLoaded', () => {
         filterDeals(activeCategory);
     });
 
-    // İlk yükleme
-    fetchProducts();
-
     // Arama kutusu işlevselliği
     const searchBox = document.querySelector('.search-box input');
     const searchButton = document.querySelector('.search-box button');
@@ -179,7 +303,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Bildirim modalı
     const modal = document.getElementById('notification-modal');
-    const notificationBtn = document.getElementById('notification-btn');
     const closeBtn = document.querySelector('.close');
     const enableNotificationsBtn = document.getElementById('enable-notifications');
     const statusText = document.getElementById('notification-status-text');
@@ -187,10 +310,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const notificationBadge = document.querySelector('.notification-badge');
     
     // Modal aç/kapa
-    notificationBtn.addEventListener('click', () => {
-        modal.style.display = 'block';
-    });
-    
     closeBtn.addEventListener('click', () => {
         modal.style.display = 'none';
     });
@@ -229,22 +348,6 @@ document.addEventListener('DOMContentLoaded', () => {
             statusText.textContent = "Bildirim izni istenirken bir hata oluştu: " + error.message;
         }
     });
-    
-    // Bildirim göster
-    function showNotification(title, body) {
-        // Web sayfası bildirimi
-        if (notificationsEnabled && Notification.permission === "granted") {
-            const notification = new Notification(title, {
-                body: body,
-                icon: "/favicon.ico" // Favicon ekleyin
-            });
-            
-            notification.onclick = function() {
-                window.focus();
-                this.close();
-            };
-        }
-    }
     
     // Uygulama içi bildirim ekle
     function addNotificationToList(product) {
@@ -303,4 +406,20 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+
+    // Otomatik sayfa yenileme
+    let lastUpdate = Date.now();
+    const AUTO_REFRESH_INTERVAL = 15 * 60 * 1000; // 15 dakika
+
+    function checkForUpdates() {
+        const now = Date.now();
+        if (now - lastUpdate > AUTO_REFRESH_INTERVAL) {
+            console.log('Otomatik yenileme yapılıyor...');
+            fetchProducts();
+            lastUpdate = now;
+        }
+    }
+
+    // Her dakika güncelleme kontrolü yap
+    setInterval(checkForUpdates, 60 * 1000);
 }); 

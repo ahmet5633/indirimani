@@ -12,17 +12,27 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
     cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
-    }
+        origin: '*',
+        methods: ['GET', 'POST'],
+        credentials: true,
+        transports: ['websocket', 'polling']
+    },
+    allowEIO3: true,
+    pingTimeout: 60000
 });
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true
+}));
 app.use(express.json());
 
 // MongoDB Bağlantısı
-mongoose.connect(process.env.MONGODB_URI, {
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://ahmetgecgin7:DbHaijd6rNC9fsIY@ahmet.mudps.mongodb.net/indirimani?retryWrites=true&w=majority&appName=ahmet';
+
+mongoose.connect(MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     serverApi: {
@@ -34,6 +44,7 @@ mongoose.connect(process.env.MONGODB_URI, {
     console.log('MongoDB bağlantısı başarılı');
 }).catch(err => {
     console.error('MongoDB bağlantı hatası:', err);
+    process.exit(1);
 });
 
 // Ürün Şeması
@@ -220,6 +231,7 @@ io.on('connection', (socket) => {
 // Fiyat Takip Fonksiyonu
 async function checkPrices() {
     try {
+        console.log('Fiyat kontrolü başlatılıyor...');
         const products = await Product.find();
         
         for (const product of products) {
@@ -237,7 +249,8 @@ async function checkPrices() {
                     headers: {
                         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36',
                         'Accept-Language': 'tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7'
-                    }
+                    },
+                    timeout: 10000 // 10 saniye timeout
                 });
                 
                 const $ = cheerio.load(response.data);
@@ -272,17 +285,32 @@ async function checkPrices() {
                     
                     console.log(`Fiyat güncellendi: ${product.title} - ${oldPrice} TL -> ${newPrice} TL`);
                 }
+
+                // Her istek arasında kısa bir bekleme süresi
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
             } catch (error) {
                 console.error(`Ürün fiyatı kontrol edilirken hata: ${product.title}`, error.message);
+                continue; // Hata durumunda diğer ürüne geç
             }
         }
+        console.log('Fiyat kontrolü tamamlandı.');
     } catch (error) {
         console.error('Fiyat kontrolü sırasında hata:', error);
     }
 }
 
-// Her 5 dakikada bir fiyatları kontrol et
-setInterval(checkPrices, 5 * 60 * 1000);
+// Render'da sleep modunu önlemek için her 14 dakikada bir kontrol
+const PRICE_CHECK_INTERVAL = 14 * 60 * 1000; // 14 dakika
+setInterval(checkPrices, PRICE_CHECK_INTERVAL);
+
+// İlk kontrolü hemen başlat
+checkPrices().catch(console.error);
+
+// Render health check endpoint'i
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'OK', time: new Date().toISOString() });
+});
 
 // Statik dosyaları servis et
 app.use(express.static('public'));

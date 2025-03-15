@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>İndiriMania - Anlık İndirimler</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -16,8 +16,11 @@
                 <h1>İndiriMania</h1>
                 <p>Anlık Fırsatlar Burada!</p>
             </div>
+            <button class="mobile-menu-btn" aria-label="Menüyü Aç">
+                <i class="fas fa-bars"></i>
+            </button>
             <nav>
-                <ul>
+                <ul id="nav-menu">
                     <li><a href="#" class="active">Ana Sayfa</a></li>
                     <li><a href="#">Kategoriler</a></li>
                     <li><a href="#">Son Eklenenler</a></li>
@@ -25,7 +28,7 @@
                 </ul>
             </nav>
             <div class="search-box">
-                <input type="text" placeholder="İndirim ara...">
+                <input type="text" placeholder="İndirim ara..." aria-label="İndirim Ara">
                 <button><i class="fas fa-search"></i></button>
             </div>
             <div class="notification-icon">
