@@ -379,6 +379,11 @@ app.get('/health', (req, res) => {
     res.status(200).json({ status: 'OK' });
 });
 
+// Ping endpoint'i
+app.get('/ping', (req, res) => {
+    res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
 // Ana sayfayı yönlendir
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/public/index.html');
@@ -395,4 +400,14 @@ server.listen(PORT, () => {
     console.log(`Sunucu ${PORT} portunda çalışıyor`);
     console.log(`Ana sayfa: http://localhost:${PORT}`);
     console.log(`Yönetim paneli: http://localhost:${PORT}/admin`);
+    
+    // Her 10 dakikada bir ping gönder
+    setInterval(async () => {
+        try {
+            const response = await axios.get(`https://indirimani.onrender.com/ping`);
+            console.log('Ping başarılı:', response.data);
+        } catch (error) {
+            console.error('Ping hatası:', error.message);
+        }
+    }, 10 * 60 * 1000);
 }); 
