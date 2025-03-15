@@ -4,10 +4,17 @@ services:
     env: node
     buildCommand: npm install
     startCommand: node server.js
+    autoDeploy: true
+    healthCheckPath: /health
     envVars:
       - key: NODE_VERSION
         value: 18.0.0
       - key: PORT
         value: 3000
+      - key: NODE_ENV
+        value: production
       - key: MONGODB_URI
-        sync: false 
+        sync: false
+    domains:
+      - indirimani.onrender.com
+    sslCert: true 
