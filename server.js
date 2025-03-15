@@ -2,30 +2,68 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const http = require('http');
+const https = require('https');
 const socketIo = require('socket.io');
 const axios = require('axios');
 const cheerio = require('cheerio');
 const { ServerApiVersion } = require('mongodb');
+const helmet = require('helmet');
 require('dotenv').config();
 
 const app = express();
 const server = http.createServer(app);
 
-// CORS ayarları
-app.use(cors({
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization']
+// Helmet güvenlik başlıkları
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            connectSrc: ["'self'", "wss://*", "ws://*", "https://*"],
+            imgSrc: ["'self'", "data:", "https://*"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            fontSrc: ["'self'", "https://*", "data:"],
+            objectSrc: ["'none'"],
+            mediaSrc: ["'self'"],
+            frameSrc: ["'self'"],
+        },
+    },
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: false,
 }));
 
+// CORS ayarları
+const corsOptions = {
+    origin: function (origin, callback) {
+        const allowedOrigins = [
+            'http://localhost:3000',
+            'https://localhost:3000',
+            'https://indirimani.onrender.com',
+            'https://www.indirimani.onrender.com'
+        ];
+        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            callback(null, true); // Geliştirme aşamasında tüm originlere izin ver
+        }
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    credentials: true,
+    maxAge: 86400
+};
+
+app.use(cors(corsOptions));
+
 // Trust proxy ayarı
-app.set('trust proxy', 1);
+app.set('trust proxy', true);
 
 // HTTPS yönlendirmesi
 app.use((req, res, next) => {
-    if (process.env.NODE_ENV === 'production' && !req.secure) {
-        return res.redirect('https://' + req.headers.host + req.url);
+    if (process.env.NODE_ENV === 'production') {
+        if (req.headers['x-forwarded-proto'] !== 'https') {
+            return res.redirect('https://' + req.headers.host + req.url);
+        }
     }
     next();
 });
@@ -39,11 +77,13 @@ const io = socketIo(server, {
         transports: ['websocket', 'polling']
     },
     allowEIO3: true,
-    pingTimeout: 60000
+    pingTimeout: 60000,
+    transports: ['websocket', 'polling']
 });
 
 // Middleware
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // MongoDB Bağlantısı
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://ahmetgecgin7:DbHaijd6rNC9fsIY@ahmet.mudps.mongodb.net/indirimani?retryWrites=true&w=majority&appName=ahmet';
@@ -348,7 +388,7 @@ setTimeout(checkPrices, 5000); // 5 saniye sonra başlat
 
 // Render health check endpoint'i
 app.get('/health', (req, res) => {
-    res.status(200).json({ status: 'OK', time: new Date().toISOString() });
+    res.status(200).json({ status: 'OK' });
 });
 
 // Statik dosyaları servis et
