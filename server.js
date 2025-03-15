@@ -17,19 +17,23 @@ const server = http.createServer(app);
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
-            defaultSrc: ["'self'"],
-            connectSrc: ["'self'", "wss://*", "ws://*", "https://*"],
-            imgSrc: ["'self'", "data:", "https://*"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-            styleSrc: ["'self'", "'unsafe-inline'"],
-            fontSrc: ["'self'", "https://*", "data:"],
+            defaultSrc: ["'self'", "https:", "http:", "data:", "blob:", "wss:", "ws:"],
+            connectSrc: ["'self'", "wss://*", "ws://*", "https://*", "http://*"],
+            imgSrc: ["'self'", "data:", "https://*", "http://*", "blob:"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://*", "http://*"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://*", "http://*"],
+            fontSrc: ["'self'", "https://*", "http://*", "data:"],
             objectSrc: ["'none'"],
-            mediaSrc: ["'self'"],
-            frameSrc: ["'self'"],
+            mediaSrc: ["'self'", "https://*", "http://*"],
+            frameSrc: ["'self'", "https://*", "http://*"],
+            workerSrc: ["'self'", "blob:"],
+            childSrc: ["'self'", "blob:"],
+            formAction: ["'self'"],
+            upgradeInsecureRequests: null
         },
     },
     crossOriginEmbedderPolicy: false,
-    crossOriginResourcePolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
 // CORS ayarları
@@ -391,17 +395,27 @@ app.get('/health', (req, res) => {
     res.status(200).json({ status: 'OK' });
 });
 
-// Statik dosyaları servis et
-app.use(express.static('public'));
+// Statik dosyaları servis et (helmet'ten sonra olmalı)
+app.use('/', express.static('public', {
+    setHeaders: (res, path) => {
+        if (path.endsWith('.css')) {
+            res.setHeader('Content-Type', 'text/css');
+        } else if (path.endsWith('.js')) {
+            res.setHeader('Content-Type', 'application/javascript');
+        } else if (path.endsWith('.png') || path.endsWith('.jpg') || path.endsWith('.jpeg')) {
+            res.setHeader('Cache-Control', 'public, max-age=31536000');
+        }
+    }
+}));
 
 // Ana sayfayı yönlendir
 app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/index.html');
+    res.sendFile(__dirname + '/public/index.html');
 });
 
 // Yönetim panelini yönlendir
 app.get('/admin', (req, res) => {
-    res.sendFile(__dirname + '/admin.html');
+    res.sendFile(__dirname + '/public/admin.html');
 });
 
 // Sunucuyu başlat
