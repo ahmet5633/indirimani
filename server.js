@@ -84,7 +84,11 @@ const io = socketIo(server, {
 });
 
 // MongoDB Bağlantısı
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://ahmetgecgin7:DbHaijd6rNC9fsIY@ahmet.mudps.mongodb.net/indirimani?retryWrites=true&w=majority&appName=ahmet';
+const MONGODB_URI = process.env.MONGODB_URI;
+if (!MONGODB_URI) {
+    console.error('MongoDB bağlantı URL\'si bulunamadı!');
+    process.exit(1);
+}
 
 mongoose.connect(MONGODB_URI, {
     useNewUrlParser: true,
@@ -96,7 +100,7 @@ mongoose.connect(MONGODB_URI, {
     }
 }).then(() => {
     console.log('MongoDB bağlantısı başarılı');
-}).catch(err => {
+}).catch((err) => {
     console.error('MongoDB bağlantı hatası:', err);
     process.exit(1);
 });
