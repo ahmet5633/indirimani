@@ -5,14 +5,14 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "build": "npm install --production=false"
+    "build": "npm install"
   },
   "engines": {
     "node": "18.x",
     "npm": "9.x"
   },
   "dependencies": {
-    "axios": "1.5.0",
+    "axios": "1.6.2",
     "cheerio": "1.0.0-rc.12",
     "cors": "2.8.5",
     "dotenv": "16.3.1",
