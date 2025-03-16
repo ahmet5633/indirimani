@@ -319,119 +319,143 @@ io.on('connection', (socket) => {
     });
 });
 
-// Fiyat Takip Fonksiyonu
+// Fiyat kontrol fonksiyonu
 async function checkPrices() {
     try {
         console.log('Fiyat kontrolü başlatılıyor...');
-        const products = await Product.find();
+        const products = await Product.find({});
         
         for (const product of products) {
             try {
                 if (!product.link) {
-                    console.log(`Ürün linki bulunamadı: ${product.title}`);
+                    console.log('Ürün linki bulunamadı:', product.title);
                     continue;
                 }
 
-                // Mağazayı belirle
-                let store = 'Bilinmiyor';
-                let selectors = {};
-                
-                if (product.link.includes('hepsiburada.com')) {
-                    store = 'Hepsiburada';
-                    selectors = {
-                        price: 'div[data-test-id="price-current-price"]',
-                        title: 'h1[itemprop="name"]'
-                    };
-                } else if (product.link.includes('trendyol.com')) {
+                // Mağaza tespiti
+                let store = '';
+                let selectors = {
+                    price: '',
+                    title: ''
+                };
+
+                if (product.link.includes('trendyol.com')) {
                     store = 'Trendyol';
                     selectors = {
-                        price: '.prc-dsc',
-                        title: 'h1.pr-new-br'
+                        price: 'span[data-test="product-price"]',
+                        title: 'h1[data-test="product-name"]'
+                    };
+                } else if (product.link.includes('hepsiburada.com')) {
+                    store = 'Hepsiburada';
+                    selectors = {
+                        price: 'span[data-price]',
+                        title: 'h1[data-test="product-name"]'
                     };
                 } else if (product.link.includes('amazon.com.tr')) {
                     store = 'Amazon';
                     selectors = {
-                        price: '.a-price-whole',
-                        title: '#productTitle'
+                        price: 'span.a-price-whole',
+                        title: 'span#productTitle'
+                    };
+                } else if (product.link.includes('n11.com')) {
+                    store = 'n11';
+                    selectors = {
+                        price: 'div.newPrice',
+                        title: 'h1.proName'
+                    };
+                } else if (product.link.includes('gittigidiyor.com')) {
+                    store = 'GittiGidiyor';
+                    selectors = {
+                        price: 'span[data-price]',
+                        title: 'h1.product-title'
                     };
                 } else {
-                    console.log(`Desteklenmeyen mağaza: ${product.link}`);
+                    console.log('Desteklenmeyen mağaza:', product.link);
                     continue;
                 }
 
-                console.log(`Fiyat kontrol ediliyor: ${product.title} (${store})`);
+                // Rastgele User-Agent seç
+                const userAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
                 
                 const response = await axios.get(product.link, {
                     headers: {
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                        'User-Agent': userAgent,
                         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                        'Accept-Language': 'tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7',
-                        'Cache-Control': 'no-cache',
-                        'Pragma': 'no-cache'
+                        'Accept-Language': 'tr-TR,tr;q=0.8,en-US;q=0.5,en;q=0.3',
+                        'Connection': 'keep-alive',
+                        'Upgrade-Insecure-Requests': '1',
+                        'Cache-Control': 'max-age=0'
                     },
-                    timeout: 10000,
+                    timeout: 30000,
                     maxRedirects: 5,
                     validateStatus: function (status) {
                         return status >= 200 && status < 500;
                     }
                 });
 
-                if (response.status !== 200) {
-                    console.log(`${store} için HTTP ${response.status} hatası: ${product.title}`);
-                    continue;
-                }
+                if (response.status === 200) {
+                    const $ = cheerio.load(response.data);
+                    const priceText = $(selectors.price).first().text().trim();
+                    const titleText = $(selectors.title).first().text().trim();
 
-                const $ = cheerio.load(response.data);
-                let newPrice = null;
+                    if (!priceText) {
+                        console.log('Geçerli fiyat bulunamadı:', product.title);
+                        continue;
+                    }
 
-                // Fiyatı çek
-                const priceText = $(selectors.price).first().text().trim();
-                if (priceText) {
-                    newPrice = parseFloat(priceText.replace(/[^0-9,]/g, '').replace(',', '.'));
-                }
+                    // Fiyatı temizle ve sayıya çevir
+                    const price = parseFloat(priceText.replace(/[^0-9,]/g, '').replace(',', '.'));
+                    
+                    if (isNaN(price)) {
+                        console.log('Geçersiz fiyat formatı:', product.title);
+                        continue;
+                    }
 
-                if (newPrice && !isNaN(newPrice) && newPrice > 0) {
-                    const oldPrice = product.currentPrice;
-                    product.currentPrice = newPrice;
-                    product.discount = Math.round(((product.originalPrice - newPrice) / product.originalPrice) * 100);
-                    product.lastUpdated = new Date();
-                    await product.save();
+                    // İndirim oranını hesapla
+                    const discount = Math.round(((product.originalPrice - price) / product.originalPrice) * 100);
 
-                    console.log(`Fiyat güncellendi: ${product.title} - ${oldPrice} TL -> ${newPrice} TL (${store})`);
+                    // Fiyat değişikliği varsa güncelle
+                    if (price !== product.currentPrice) {
+                        console.log(`Fiyat güncellendi: ${product.title} - ${product.currentPrice} TL -> ${price} TL (%${discount} indirim)`);
+                        
+                        product.currentPrice = price;
+                        product.discount = discount;
+                        product.lastUpdated = new Date();
+                        await product.save();
 
-                    // WebSocket ile bildirim gönder
-                    io.emit('price_update', {
-                        id: product._id,
-                        title: product.title,
-                        oldPrice: oldPrice,
-                        newPrice: newPrice,
-                        discount: product.discount,
-                        store: store
-                    });
+                        // WebSocket ile bildirim gönder
+                        io.emit('price_update', {
+                            title: product.title,
+                            oldPrice: product.currentPrice,
+                            newPrice: price,
+                            discount: discount,
+                            link: product.link,
+                            category: product.category,
+                            store: store
+                        });
+                    }
                 } else {
-                    console.log(`Geçerli fiyat bulunamadı: ${product.title} (${store})`);
+                    console.log(`Fiyat kontrolü başarısız (${response.status}):`, product.title);
                 }
 
-                // İstekler arası bekleme
-                await new Promise(resolve => setTimeout(resolve, 3000));
-
+                // Her istek arasında rastgele bekleme (1-3 saniye)
+                await new Promise(resolve => setTimeout(resolve, Math.random() * 2000 + 1000));
             } catch (error) {
-                console.error(`Ürün fiyatı kontrol edilirken hata (${product.title}):`, error.message);
-                await new Promise(resolve => setTimeout(resolve, 5000));
+                console.error(`Ürün kontrolünde hata (${product.title}):`, error.message);
             }
         }
+
         console.log('Fiyat kontrolü tamamlandı.');
     } catch (error) {
-        console.error('Fiyat kontrolü sırasında genel hata:', error);
+        console.error('Fiyat kontrolünde genel hata:', error);
     }
 }
 
-// Render'da sleep modunu önlemek için her 14 dakikada bir kontrol
-const PRICE_CHECK_INTERVAL = 14 * 60 * 1000; // 14 dakika
-setInterval(checkPrices, PRICE_CHECK_INTERVAL);
+// Her 14 dakikada bir fiyat kontrolü yap
+setInterval(checkPrices, 14 * 60 * 1000);
 
-// İlk kontrolü hemen başlat
-setTimeout(checkPrices, 5000); // 5 saniye sonra başlat
+// İlk fiyat kontrolünü 5 saniye sonra başlat
+setTimeout(checkPrices, 5000);
 
 // Render health check endpoint'i
 app.get('/health', (req, res) => {
