@@ -5,7 +5,7 @@ services:
     buildCommand: npm install
     startCommand: node server.js
     autoDeploy: true
-    repo: https://github.com/ahmet5633/indirimani.git
+    repo: https://github.com/ahmetgecgin7/indirimani.git
     branch: main
     plan: free
     healthCheckPath: /health
@@ -37,4 +37,11 @@ services:
       - type: redirect
         source: /*
         destination: https://indirimani.onrender.com/:splat
-        statusCode: 301 
+        statusCode: 301
+    buildFilter:
+      paths:
+        - "public/**"
+        - "server.js"
+        - "package.json"
+        - "package-lock.json"
+        - "render.yaml" 

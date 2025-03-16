@@ -22,24 +22,35 @@ document.addEventListener('DOMContentLoaded', () => {
         timeout: 20000
     });
     
-    // Bildirim değişkenleri
-    let notificationsEnabled = false;
-    
+    // Bildirim ayarları
+    let notificationSettings = {
+        enabled: false,
+        discountThreshold: 40,
+        categories: {
+            all: true,
+            elektronik: true,
+            giyim: true,
+            ev: true,
+            kozmetik: true,
+            kitap: true
+        }
+    };
+
     // Bildirim izni kontrolü ve isteme
     async function checkAndRequestNotifications() {
         if ('Notification' in window) {
             if (Notification.permission === 'granted') {
-                notificationsEnabled = true;
+                notificationSettings.enabled = true;
             } else if (Notification.permission !== 'denied') {
                 const permission = await Notification.requestPermission();
-                notificationsEnabled = permission === 'granted';
+                notificationSettings.enabled = permission === 'granted';
             }
         }
     }
 
     // Bildirim gösterme fonksiyonu
     function showNotification(title, body) {
-        if (notificationsEnabled) {
+        if (notificationSettings.enabled) {
             try {
                 const notification = new Notification(title, {
                     body: body,
@@ -63,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (notificationBtn) {
         notificationBtn.addEventListener('click', async () => {
             await checkAndRequestNotifications();
-            if (notificationsEnabled) {
+            if (notificationSettings.enabled) {
                 showNotification('Bildirimler Aktif', 'Artık fiyat değişikliklerinden haberdar olacaksınız!');
             }
         });
@@ -125,14 +136,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Fiyat güncellemelerini dinle
     socket.on('price_update', (data) => {
-        if (notificationsEnabled) {
-            showNotification(
-                'Fiyat Değişimi!',
-                `${data.title} ürününün fiyatı ${data.oldPrice} TL'den ${data.newPrice} TL'ye düştü! (%${data.discount} indirim)`
-            );
+        if (notificationSettings.enabled) {
+            const category = data.category || 'all';
+            if (notificationSettings.categories.all || notificationSettings.categories[category]) {
+                if (data.discount >= notificationSettings.discountThreshold) {
+                    const message = `${data.title} ürününün fiyatı ${data.oldPrice} TL'den ${data.newPrice} TL'ye düştü! (%${data.discount} indirim)`;
+                    showNotification('Fiyat Düştü! 🎉', message);
+                    
+                    // Bildirim listesine ekle
+                    addNotificationToList(data);
+                }
+            }
         }
-        // Ürün listesini güncelle
-        fetchProducts();
     });
 
     // Ürünleri getir ve görüntüle
@@ -302,110 +317,133 @@ document.addEventListener('DOMContentLoaded', () => {
     // ----- Bildirim Sistemi ----- //
     
     // Bildirim modalı
-    const modal = document.getElementById('notification-modal');
+    const notificationModal = document.getElementById('notification-modal');
     const closeBtn = document.querySelector('.close');
     const enableNotificationsBtn = document.getElementById('enable-notifications');
-    const statusText = document.getElementById('notification-status-text');
+    const discountThresholdSelect = document.getElementById('discount-threshold');
+    const notificationStatusText = document.getElementById('notification-status-text');
     const notificationList = document.getElementById('notification-list');
     const notificationBadge = document.querySelector('.notification-badge');
     
-    // Modal aç/kapa
-    closeBtn.addEventListener('click', () => {
-        modal.style.display = 'none';
-    });
-    
-    window.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            modal.style.display = 'none';
-        }
-    });
-    
-    // Bildirim izni
-    enableNotificationsBtn.addEventListener('click', async () => {
+    // Bildirim izni iste
+    async function requestNotificationPermission() {
         try {
-            // Web bildirim izni iste
-            if (Notification.permission !== "granted") {
-                const permission = await Notification.requestPermission();
-                
-                if (permission === "granted") {
-                    notificationsEnabled = true;
-                    statusText.textContent = "Bildirimler etkinleştirildi! Artık fiyat değişimlerinden anında haberdar olacaksınız.";
-                    enableNotificationsBtn.textContent = "Bildirimler Etkin";
-                    enableNotificationsBtn.disabled = true;
-                    
-                    // Test bildirimi
-                    showNotification("Bildirimler Etkinleştirildi", "Artık %40 ve üzeri indirimleri anlık takip edebilirsiniz.");
-                } else {
-                    statusText.textContent = "Bildirim izni verilmedi. Bildirimleri almak için izin vermelisiniz.";
-                }
-            } else {
-                notificationsEnabled = true;
-                statusText.textContent = "Bildirimler etkinleştirildi! Artık fiyat değişimlerinden anında haberdar olacaksınız.";
-                enableNotificationsBtn.textContent = "Bildirimler Etkin";
-                enableNotificationsBtn.disabled = true;
+            const permission = await Notification.requestPermission();
+            if (permission === 'granted') {
+                notificationSettings.enabled = true;
+                updateNotificationUI();
+                saveNotificationSettings();
             }
         } catch (error) {
-            statusText.textContent = "Bildirim izni istenirken bir hata oluştu: " + error.message;
+            console.error('Bildirim izni alınamadı:', error);
         }
-    });
-    
-    // Uygulama içi bildirim ekle
-    function addNotificationToList(product) {
-        // Boş bildirim mesajını kaldır
-        const emptyNotification = document.querySelector('.empty-notification');
-        if (emptyNotification) {
-            emptyNotification.remove();
-        }
-        
-        // Fiyat formatla
-        const formatPrice = (price) => {
-            return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-        };
-        
-        const priceChange = Math.round(((product.oldPrice - product.newPrice) / product.oldPrice) * 100);
-        const now = new Date();
-        const timeString = now.getHours() + ':' + (now.getMinutes() < 10 ? '0' : '') + now.getMinutes();
-        
-        const notificationItem = document.createElement('div');
-        notificationItem.className = 'notification-item';
-        notificationItem.innerHTML = `
-            <div class="notification-info">
-                <div class="notification-title">${product.title}</div>
-                <div class="notification-price">
-                    <span class="original-price">${formatPrice(product.oldPrice)} TL</span> → 
-                    <span class="current-price">${formatPrice(product.newPrice)} TL</span>
-                    <span class="price-change">(%${priceChange} ↓)</span>
-                </div>
-                <div class="notification-time">Bugün, ${timeString}</div>
-            </div>
-            <div class="notification-action">
-                <a href="${product.link || '#'}" target="_blank">Ürüne Git <i class="fas fa-arrow-right"></i></a>
-            </div>
-        `;
-        
-        // Listeye ekle
-        notificationList.prepend(notificationItem);
-        
-        // Bildirim sayısını artır
-        const currentCount = parseInt(notificationBadge.textContent);
-        notificationBadge.textContent = currentCount + 1;
     }
-    
-    // Bildirim ayarları değişikliği izle
-    document.getElementById('discount-threshold').addEventListener('change', () => {
-        if (notificationsEnabled) {
-            statusText.textContent = "Bildirim ayarlarınız güncellendi!";
+
+    // Bildirim ayarlarını kaydet
+    function saveNotificationSettings() {
+        localStorage.setItem('notificationSettings', JSON.stringify(notificationSettings));
+    }
+
+    // Bildirim ayarlarını yükle
+    function loadNotificationSettings() {
+        const savedSettings = localStorage.getItem('notificationSettings');
+        if (savedSettings) {
+            notificationSettings = JSON.parse(savedSettings);
+            updateNotificationUI();
         }
-    });
-    
-    // Kategori checkboxları değişikliğini izle
-    document.querySelectorAll('.checkbox-group input').forEach(checkbox => {
-        checkbox.addEventListener('change', () => {
-            if (notificationsEnabled) {
-                statusText.textContent = "Bildirim kategorileriniz güncellendi!";
+    }
+
+    // Bildirim arayüzünü güncelle
+    function updateNotificationUI() {
+        if (notificationSettings.enabled) {
+            enableNotificationsBtn.textContent = 'Bildirimleri Devre Dışı Bırak';
+            notificationStatusText.textContent = 'Bildirimler etkin. Fiyat değişimlerinden anında haberdar olacaksınız.';
+            enableNotificationsBtn.classList.add('active');
+        } else {
+            enableNotificationsBtn.textContent = 'Bildirimleri Etkinleştir';
+            notificationStatusText.textContent = 'Fiyat değişimlerinden anında haberdar olmak için bildirimleri etkinleştirin.';
+            enableNotificationsBtn.classList.remove('active');
+        }
+
+        // İndirim eşiği ayarını güncelle
+        discountThresholdSelect.value = notificationSettings.discountThreshold;
+
+        // Kategori seçimlerini güncelle
+        Object.keys(notificationSettings.categories).forEach(category => {
+            const checkbox = document.getElementById(`cat-${category}`);
+            if (checkbox) {
+                checkbox.checked = notificationSettings.categories[category];
             }
         });
+    }
+
+    // Bildirim gönder
+    function sendNotification(title, message) {
+        if (notificationSettings.enabled) {
+            new Notification(title, {
+                body: message,
+                icon: '/images/logo.png'
+            });
+        }
+    }
+
+    // Event Listeners
+    notificationBtn.addEventListener('click', () => {
+        notificationModal.style.display = 'block';
     });
+
+    closeBtn.addEventListener('click', () => {
+        notificationModal.style.display = 'none';
+    });
+
+    enableNotificationsBtn.addEventListener('click', () => {
+        if (!notificationSettings.enabled) {
+            requestNotificationPermission();
+        } else {
+            notificationSettings.enabled = false;
+            updateNotificationUI();
+            saveNotificationSettings();
+        }
+    });
+
+    discountThresholdSelect.addEventListener('change', (e) => {
+        notificationSettings.discountThreshold = parseInt(e.target.value);
+        saveNotificationSettings();
+    });
+
+    // Kategori checkbox'ları için event listener
+    document.querySelectorAll('.checkbox-item input').forEach(checkbox => {
+        checkbox.addEventListener('change', (e) => {
+            const category = e.target.id.replace('cat-', '');
+            notificationSettings.categories[category] = e.target.checked;
+            
+            // "Tümü" seçeneği için özel kontrol
+            if (category === 'all') {
+                Object.keys(notificationSettings.categories).forEach(cat => {
+                    if (cat !== 'all') {
+                        notificationSettings.categories[cat] = e.target.checked;
+                        const catCheckbox = document.getElementById(`cat-${cat}`);
+                        if (catCheckbox) {
+                            catCheckbox.checked = e.target.checked;
+                        }
+                    }
+                });
+            } else {
+                // Diğer kategoriler seçildiğinde "Tümü" seçeneğini kontrol et
+                const allCheckbox = document.getElementById('cat-all');
+                const allCategoriesSelected = Object.keys(notificationSettings.categories)
+                    .filter(cat => cat !== 'all')
+                    .every(cat => notificationSettings.categories[cat]);
+                allCheckbox.checked = allCategoriesSelected;
+                notificationSettings.categories.all = allCategoriesSelected;
+            }
+            
+            saveNotificationSettings();
+        });
+    });
+
+    // Sayfa yüklendiğinde ayarları yükle
+    loadNotificationSettings();
 
     // Otomatik sayfa yenileme
     let lastUpdate = Date.now();
