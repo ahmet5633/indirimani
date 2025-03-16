@@ -1,0 +1,18 @@
+app:
+  name: indirimani
+  services:
+    - name: web
+      instance_type: nano
+      git:
+        repository: ahmet5633/indirimani
+        branch: main
+      build:
+        builder: nodejs
+      ports:
+        - port: 3000
+          protocol: http
+      env:
+        - name: NODE_ENV
+          value: production
+        - name: PORT
+          value: "3000" 
