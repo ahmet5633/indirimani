@@ -91,69 +91,64 @@
         </div>
     </main>
     
-    <!-- Bildirim Modalı -->
+    <!-- Bildirim Ayarları Modal -->
     <div id="notification-modal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
-            
-            <div class="modal-header">
-                <h2>Bildirim Ayarları</h2>
-            </div>
-            
+            <h2>Bildirim Ayarları</h2>
             <div class="notification-settings">
                 <div class="notification-status">
                     <p id="notification-status-text">Fiyat değişimlerinden anında haberdar olmak için bildirimleri etkinleştirin.</p>
-                    <button id="enable-notifications">Bildirimleri Etkinleştir</button>
+                    <button id="enable-notifications" class="btn">Bildirimleri Etkinleştir</button>
                 </div>
                 
-                <h3>Bildirim Tercihleri</h3>
-                
-                <div class="settings-group">
-                    <label for="discount-threshold">Minimum İndirim Oranı:</label>
+                <div class="discount-threshold">
+                    <label for="discount-threshold">İndirim Eşiği:</label>
                     <select id="discount-threshold">
-                        <option value="10">%10 ve üzeri</option>
-                        <option value="20">%20 ve üzeri</option>
-                        <option value="30">%30 ve üzeri</option>
-                        <option value="40" selected>%40 ve üzeri</option>
+                        <option value="40">%40 ve üzeri</option>
                         <option value="50">%50 ve üzeri</option>
+                        <option value="60">%60 ve üzeri</option>
+                        <option value="70">%70 ve üzeri</option>
+                        <option value="80">%80 ve üzeri</option>
+                        <option value="90">%90 ve üzeri</option>
                     </select>
                 </div>
                 
-                <div class="settings-group">
-                    <label>Bildirim Kategorileri:</label>
+                <div class="category-filters">
+                    <h3>Kategori Filtreleri</h3>
                     <div class="checkbox-group">
-                        <div class="checkbox-item">
+                        <label class="checkbox-item">
                             <input type="checkbox" id="cat-all" checked>
-                            <label for="cat-all">Tümü</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="cat-elektronik">
-                            <label for="cat-elektronik">Elektronik</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="cat-giyim">
-                            <label for="cat-giyim">Giyim</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="cat-ev">
-                            <label for="cat-ev">Ev & Yaşam</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="cat-kozmetik">
-                            <label for="cat-kozmetik">Kozmetik</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="cat-kitap">
-                            <label for="cat-kitap">Kitap & Hobi</label>
-                        </div>
+                            Tümü
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="cat-elektronik" checked>
+                            Elektronik
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="cat-giyim" checked>
+                            Giyim
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="cat-ev" checked>
+                            Ev & Yaşam
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="cat-kozmetik" checked>
+                            Kozmetik
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="cat-kitap" checked>
+                            Kitap
+                        </label>
                     </div>
                 </div>
-            </div>
-            
-            <div class="notification-list-container">
-                <h3>Son Bildirimler</h3>
-                <div id="notification-list" class="notification-list">
-                    <div class="empty-notification">Henüz bildirim bulunmuyor.</div>
+                
+                <div class="notification-history">
+                    <h3>Bildirim Geçmişi</h3>
+                    <div id="notification-list" class="notification-list">
+                        <div class="empty-notification">Henüz bildirim bulunmuyor.</div>
+                    </div>
                 </div>
             </div>
         </div>

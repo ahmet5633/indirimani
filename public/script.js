@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     // Bildirim ayarları
-    let notificationSettings = {
+    const notificationSettings = {
         enabled: false,
         discountThreshold: 40,
         categories: {
@@ -333,9 +333,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 notificationSettings.enabled = true;
                 updateNotificationUI();
                 saveNotificationSettings();
+                showToast('Bildirimler başarıyla etkinleştirildi!');
+            } else {
+                showToast('Bildirim izni reddedildi. Lütfen tarayıcı ayarlarından bildirimleri etkinleştirin.');
             }
         } catch (error) {
             console.error('Bildirim izni alınamadı:', error);
+            showToast('Bildirim izni alınamadı. Lütfen tarayıcı ayarlarınızı kontrol edin.');
         }
     }
 
@@ -348,27 +352,30 @@ document.addEventListener('DOMContentLoaded', () => {
     function loadNotificationSettings() {
         const savedSettings = localStorage.getItem('notificationSettings');
         if (savedSettings) {
-            notificationSettings = JSON.parse(savedSettings);
+            Object.assign(notificationSettings, JSON.parse(savedSettings));
             updateNotificationUI();
         }
     }
 
     // Bildirim arayüzünü güncelle
     function updateNotificationUI() {
+        const statusText = document.getElementById('notification-status-text');
+        const enableButton = document.getElementById('enable-notifications');
+        const discountSelect = document.getElementById('discount-threshold');
+        
         if (notificationSettings.enabled) {
-            enableNotificationsBtn.textContent = 'Bildirimleri Devre Dışı Bırak';
-            notificationStatusText.textContent = 'Bildirimler etkin. Fiyat değişimlerinden anında haberdar olacaksınız.';
-            enableNotificationsBtn.classList.add('active');
+            statusText.textContent = 'Bildirimler etkinleştirildi.';
+            enableButton.textContent = 'Bildirimleri Devre Dışı Bırak';
+            enableButton.classList.add('disabled');
         } else {
-            enableNotificationsBtn.textContent = 'Bildirimleri Etkinleştir';
-            notificationStatusText.textContent = 'Fiyat değişimlerinden anında haberdar olmak için bildirimleri etkinleştirin.';
-            enableNotificationsBtn.classList.remove('active');
+            statusText.textContent = 'Fiyat değişimlerinden anında haberdar olmak için bildirimleri etkinleştirin.';
+            enableButton.textContent = 'Bildirimleri Etkinleştir';
+            enableButton.classList.remove('disabled');
         }
-
-        // İndirim eşiği ayarını güncelle
-        discountThresholdSelect.value = notificationSettings.discountThreshold;
-
-        // Kategori seçimlerini güncelle
+        
+        discountSelect.value = notificationSettings.discountThreshold;
+        
+        // Kategori checkbox'larını güncelle
         Object.keys(notificationSettings.categories).forEach(category => {
             const checkbox = document.getElementById(`cat-${category}`);
             if (checkbox) {
@@ -378,12 +385,57 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Bildirim gönder
-    function sendNotification(title, message) {
-        if (notificationSettings.enabled) {
-            new Notification(title, {
-                body: message,
-                icon: '/images/logo.png'
-            });
+    function sendNotification(title, message, product) {
+        if (!notificationSettings.enabled) return;
+        
+        const discount = calculateDiscount(product.oldPrice, product.currentPrice);
+        if (discount < notificationSettings.discountThreshold) return;
+        
+        if (!notificationSettings.categories.all && !notificationSettings.categories[product.category]) return;
+        
+        const notification = new Notification(title, {
+            body: message,
+            icon: '/images/logo.png'
+        });
+        
+        notification.onclick = () => {
+            window.open(product.link, '_blank');
+        };
+        
+        addNotificationToList(title, message, product);
+    }
+
+    // Bildirim Listesine Ekle
+    function addNotificationToList(title, message, product) {
+        const notificationList = document.getElementById('notification-list');
+        const emptyNotification = notificationList.querySelector('.empty-notification');
+        
+        if (emptyNotification) {
+            emptyNotification.remove();
+        }
+        
+        const notificationItem = document.createElement('div');
+        notificationItem.className = 'notification-item';
+        notificationItem.innerHTML = `
+            <div class="notification-info">
+                <div class="notification-title">${title}</div>
+                <div class="notification-price">
+                    Eski Fiyat: ${formatPrice(product.oldPrice)} TL
+                    <span class="price-change">Yeni Fiyat: ${formatPrice(product.currentPrice)} TL</span>
+                </div>
+                <div class="notification-time">${new Date().toLocaleString()}</div>
+            </div>
+            <div class="notification-action">
+                <a href="${product.link}" target="_blank">Ürünü Görüntüle</a>
+            </div>
+        `;
+        
+        notificationList.insertBefore(notificationItem, notificationList.firstChild);
+        
+        // Maksimum 10 bildirim göster
+        const notifications = notificationList.querySelectorAll('.notification-item');
+        if (notifications.length > 10) {
+            notifications[notifications.length - 1].remove();
         }
     }
 
@@ -396,50 +448,46 @@ document.addEventListener('DOMContentLoaded', () => {
         notificationModal.style.display = 'none';
     });
 
-    enableNotificationsBtn.addEventListener('click', () => {
-        if (!notificationSettings.enabled) {
-            requestNotificationPermission();
-        } else {
-            notificationSettings.enabled = false;
-            updateNotificationUI();
-            saveNotificationSettings();
-        }
-    });
+    enableNotificationsBtn.addEventListener('click', requestNotificationPermission);
 
-    discountThresholdSelect.addEventListener('change', (e) => {
-        notificationSettings.discountThreshold = parseInt(e.target.value);
-        saveNotificationSettings();
-    });
-
-    // Kategori checkbox'ları için event listener
-    document.querySelectorAll('.checkbox-item input').forEach(checkbox => {
-        checkbox.addEventListener('change', (e) => {
-            const category = e.target.id.replace('cat-', '');
-            notificationSettings.categories[category] = e.target.checked;
-            
-            // "Tümü" seçeneği için özel kontrol
-            if (category === 'all') {
-                Object.keys(notificationSettings.categories).forEach(cat => {
-                    if (cat !== 'all') {
-                        notificationSettings.categories[cat] = e.target.checked;
-                        const catCheckbox = document.getElementById(`cat-${cat}`);
-                        if (catCheckbox) {
-                            catCheckbox.checked = e.target.checked;
-                        }
-                    }
-                });
-            } else {
-                // Diğer kategoriler seçildiğinde "Tümü" seçeneğini kontrol et
-                const allCheckbox = document.getElementById('cat-all');
-                const allCategoriesSelected = Object.keys(notificationSettings.categories)
-                    .filter(cat => cat !== 'all')
-                    .every(cat => notificationSettings.categories[cat]);
-                allCheckbox.checked = allCategoriesSelected;
-                notificationSettings.categories.all = allCategoriesSelected;
-            }
-            
+    if (discountThresholdSelect) {
+        discountThresholdSelect.addEventListener('change', (e) => {
+            notificationSettings.discountThreshold = parseInt(e.target.value);
             saveNotificationSettings();
         });
+    }
+
+    // Kategori checkbox'ları için event listener'lar
+    Object.keys(notificationSettings.categories).forEach(category => {
+        const checkbox = document.getElementById(`cat-${category}`);
+        if (checkbox) {
+            checkbox.addEventListener('change', (e) => {
+                notificationSettings.categories[category] = e.target.checked;
+                
+                // "Tümü" checkbox'ı için özel işlem
+                if (category === 'all') {
+                    Object.keys(notificationSettings.categories).forEach(cat => {
+                        if (cat !== 'all') {
+                            const otherCheckbox = document.getElementById(`cat-${cat}`);
+                            if (otherCheckbox) {
+                                otherCheckbox.checked = e.target.checked;
+                                notificationSettings.categories[cat] = e.target.checked;
+                            }
+                        }
+                    });
+                } else {
+                    // Diğer checkbox'lar için "Tümü" durumunu kontrol et
+                    const allCheckbox = document.getElementById('cat-all');
+                    const allChecked = Object.keys(notificationSettings.categories)
+                        .filter(cat => cat !== 'all')
+                        .every(cat => notificationSettings.categories[cat]);
+                    allCheckbox.checked = allChecked;
+                    notificationSettings.categories.all = allChecked;
+                }
+                
+                saveNotificationSettings();
+            });
+        }
     });
 
     // Sayfa yüklendiğinde ayarları yükle
@@ -460,4 +508,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Her dakika güncelleme kontrolü yap
     setInterval(checkForUpdates, 60 * 1000);
+
+    // Yardımcı Fonksiyonlar
+    function calculateDiscount(oldPrice, newPrice) {
+        return Math.round(((oldPrice - newPrice) / oldPrice) * 100);
+    }
+
+    function formatPrice(price) {
+        return price.toLocaleString('tr-TR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    }
+
+    function showToast(message) {
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.classList.add('show');
+        }, 100);
+        
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => {
+                toast.remove();
+            }, 300);
+        }, 3000);
+    }
 }); 

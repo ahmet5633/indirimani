@@ -402,208 +402,134 @@ header {
     top: 0;
     width: 100%;
     height: 100%;
-    overflow: auto;
     background-color: rgba(0, 0, 0, 0.5);
+    overflow-y: auto;
 }
 
 .modal-content {
-    background-color: white;
-    margin: 10% auto;
+    background-color: #fff;
+    margin: 5% auto;
     padding: 20px;
-    border-radius: var(--border-radius);
+    border-radius: 8px;
+    width: 90%;
     max-width: 500px;
-    box-shadow: var(--box-shadow);
     position: relative;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .close {
     position: absolute;
     right: 20px;
-    top: 15px;
-    font-size: 24px;
+    top: 10px;
+    font-size: 28px;
     font-weight: bold;
-    color: var(--gray-color);
     cursor: pointer;
-}
-
-.close:hover {
-    color: var(--primary-color);
-}
-
-.modal-header {
-    margin-bottom: 20px;
-}
-
-.modal-header h2 {
-    font-size: 20px;
-    color: var(--secondary-color);
+    color: #666;
 }
 
 .notification-settings {
-    margin-bottom: 20px;
-}
-
-.notification-settings h3 {
-    font-size: 16px;
-    margin-bottom: 10px;
-    color: var(--secondary-color);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
 .notification-status {
-    background-color: #f8f9fa;
+    text-align: center;
     padding: 15px;
-    border-radius: var(--border-radius);
-    margin-bottom: 15px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
 }
 
-#notification-status-text {
-    font-size: 14px;
-    color: var(--gray-color);
+.notification-status p {
     margin-bottom: 10px;
+    color: #666;
 }
 
-#enable-notifications {
-    background-color: var(--primary-color);
+.btn {
+    background-color: #007bff;
     color: white;
     border: none;
-    padding: 8px 15px;
-    border-radius: var(--border-radius);
-    font-size: 14px;
-    font-weight: 500;
+    padding: 10px 20px;
+    border-radius: 4px;
     cursor: pointer;
-    transition: var(--transition);
+    font-size: 16px;
+    transition: background-color 0.3s;
 }
 
-#enable-notifications:hover {
-    background-color: var(--accent-color);
+.btn:hover {
+    background-color: #0056b3;
 }
 
-#enable-notifications:disabled {
-    background-color: var(--success-color);
-    cursor: not-allowed;
+.discount-threshold {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
-.settings-group {
+.discount-threshold select {
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    font-size: 14px;
+}
+
+.category-filters {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 6px;
+}
+
+.category-filters h3 {
     margin-bottom: 15px;
-}
-
-.settings-group label {
-    display: block;
-    margin-bottom: 5px;
-    font-size: 14px;
-    color: var(--secondary-color);
-}
-
-.settings-group select {
-    width: 100%;
-    padding: 8px 15px;
-    border: 1px solid #dfe4ea;
-    border-radius: var(--border-radius);
-    font-size: 14px;
-    color: var(--secondary-color);
-    background-color: white;
+    color: #333;
 }
 
 .checkbox-group {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 10px;
 }
 
 .checkbox-item {
     display: flex;
     align-items: center;
+    gap: 8px;
+    cursor: pointer;
 }
 
-.checkbox-item input {
-    margin-right: 5px;
+.checkbox-item input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
 }
 
-.checkbox-item label {
-    font-size: 14px;
-    color: var(--secondary-color);
-}
-
-.notification-list-container {
-    max-height: 300px;
-    overflow-y: auto;
+.notification-history {
     margin-top: 20px;
 }
 
-.notification-list-container h3 {
-    font-size: 16px;
-    margin-bottom: 10px;
-    color: var(--secondary-color);
-}
-
 .notification-list {
-    background-color: #f8f9fa;
-    border-radius: var(--border-radius);
-    overflow: hidden;
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
 }
 
 .notification-item {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px;
-    border-bottom: 1px solid #f1f2f6;
-    transition: var(--transition);
-}
-
-.notification-item:hover {
-    background-color: #f1f2f6;
 }
 
 .notification-item:last-child {
     border-bottom: none;
 }
 
-.notification-info {
-    flex: 1;
-}
-
-.notification-title {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--secondary-color);
-    margin-bottom: 5px;
-    display: -webkit-box;
-    -webkit-line-clamp: 1;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-.notification-price {
-    font-size: 14px;
-    margin-bottom: 5px;
-}
-
-.notification-price .price-change {
-    color: var(--success-color);
-    font-weight: 500;
-}
-
-.notification-time {
-    font-size: 12px;
-    color: var(--gray-color);
-}
-
-.notification-action a {
-    font-size: 14px;
-    color: var(--primary-color);
-    display: flex;
-    align-items: center;
-}
-
-.notification-action a i {
-    margin-left: 5px;
-}
-
 .empty-notification {
-    padding: 20px;
     text-align: center;
-    color: var(--gray-color);
+    color: #666;
+    padding: 20px;
 }
 
 /* Footer */
@@ -726,8 +652,9 @@ footer {
     }
     
     .modal-content {
-        width: 90%;
-        margin: 20% auto;
+        margin: 10% auto;
+        width: 95%;
+        padding: 15px;
     }
     
     .checkbox-group {
@@ -978,5 +905,36 @@ footer {
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+
+/* Toast Bildirimleri */
+.toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #333;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 4px;
+    font-size: 14px;
+    opacity: 0;
+    transform: translateY(100%);
+    transition: all 0.3s ease-in-out;
+    z-index: 1000;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+    .toast {
+        left: 20px;
+        right: 20px;
+        bottom: 10px;
+        text-align: center;
     }
 } 
