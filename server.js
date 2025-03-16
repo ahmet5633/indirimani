@@ -115,29 +115,58 @@ app.get('/api/products', async (req, res) => {
         }
         
         const products = await Product.find(query).sort({ lastUpdated: -1 });
+        
+        if (!products || products.length === 0) {
+            return res.status(404).json({ message: 'Ürün bulunamadı' });
+        }
+        
         res.json(products);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('Ürün listesi alınırken hata:', error);
+        res.status(500).json({ 
+            message: 'Ürünler yüklenirken bir hata oluştu',
+            error: error.message 
+        });
     }
 });
 
 app.get('/api/products/:category', async (req, res) => {
     try {
         const products = await Product.find({ category: req.params.category }).sort({ lastUpdated: -1 });
+        
+        if (!products || products.length === 0) {
+            return res.status(404).json({ message: 'Bu kategoride ürün bulunamadı' });
+        }
+        
         res.json(products);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('Kategori ürünleri alınırken hata:', error);
+        res.status(500).json({ 
+            message: 'Ürünler yüklenirken bir hata oluştu',
+            error: error.message 
+        });
     }
 });
 
 // Yeni ürün ekle
 app.post('/api/products', async (req, res) => {
     try {
+        if (!req.body.title || !req.body.currentPrice || !req.body.link) {
+            return res.status(400).json({ 
+                message: 'Gerekli alanlar eksik',
+                required: ['title', 'currentPrice', 'link']
+            });
+        }
+
         const newProduct = new Product(req.body);
         const savedProduct = await newProduct.save();
         res.status(201).json(savedProduct);
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        console.error('Ürün eklenirken hata:', error);
+        res.status(400).json({ 
+            message: 'Ürün eklenirken bir hata oluştu',
+            error: error.message 
+        });
     }
 });
 
@@ -147,7 +176,7 @@ app.put('/api/products/:id', async (req, res) => {
         const updatedProduct = await Product.findByIdAndUpdate(
             req.params.id, 
             req.body, 
-            { new: true }
+            { new: true, runValidators: true }
         );
         
         if (!updatedProduct) {
@@ -156,7 +185,11 @@ app.put('/api/products/:id', async (req, res) => {
         
         res.json(updatedProduct);
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        console.error('Ürün güncellenirken hata:', error);
+        res.status(400).json({ 
+            message: 'Ürün güncellenirken bir hata oluştu',
+            error: error.message 
+        });
     }
 });
 
@@ -171,7 +204,11 @@ app.delete('/api/products/:id', async (req, res) => {
         
         res.json({ message: 'Ürün başarıyla silindi' });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('Ürün silinirken hata:', error);
+        res.status(500).json({ 
+            message: 'Ürün silinirken bir hata oluştu',
+            error: error.message 
+        });
     }
 });
 
