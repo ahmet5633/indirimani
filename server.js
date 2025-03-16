@@ -14,17 +14,38 @@ const server = http.createServer(app);
 
 // Güvenlik ayarları
 app.use(helmet({
-    contentSecurityPolicy: false,
-    crossOriginResourcePolicy: { policy: "cross-origin" },
-    crossOriginEmbedderPolicy: false,
-    crossOriginOpenerPolicy: { policy: "unsafe-none" }
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "https://code.jquery.com", "https://cdn.jsdelivr.net"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
+            imgSrc: ["'self'", "data:", "https:"],
+            connectSrc: ["'self'", "https:"],
+            fontSrc: ["'self'", "https://cdn.jsdelivr.net"],
+            objectSrc: ["'none'"],
+            mediaSrc: ["'self'"],
+            frameSrc: ["'self'"],
+        }
+    },
+    hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true
+    },
+    frameguard: {
+        action: 'sameorigin'
+    },
+    referrerPolicy: {
+        policy: 'strict-origin-when-cross-origin'
+    }
 }));
 
 // CORS ayarları
 app.use(cors({
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
 }));
 
 // Trust proxy ayarı
@@ -33,10 +54,11 @@ app.enable('trust proxy');
 // HTTPS yönlendirmesi
 if (process.env.NODE_ENV === 'production') {
     app.use((req, res, next) => {
-        if (!req.secure && req.get('x-forwarded-proto') !== 'https') {
-            return res.redirect('https://' + req.get('host') + req.url);
+        if (req.header('x-forwarded-proto') !== 'https') {
+            res.redirect(`https://${req.header('host')}${req.url}`);
+        } else {
+            next();
         }
-        next();
     });
 }
 
