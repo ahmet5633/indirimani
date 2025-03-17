@@ -5,4 +5,5 @@ npm-debug.log
 .env
 .env.local
 .DS_Store
-README.md 
+README.md
+*.log 

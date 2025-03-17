@@ -4,8 +4,7 @@
   "description": "İndiriMani - Fiyat Takip Uygulaması",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "build": "npm ci --only=production"
+    "start": "node server.js"
   },
   "engines": {
     "node": "18.x"
@@ -19,8 +18,5 @@
     "helmet": "^7.1.0",
     "mongoose": "^7.5.0",
     "socket.io": "^4.7.2"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.1"
   }
 }

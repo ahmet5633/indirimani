@@ -6,8 +6,10 @@ app:
       git:
         repository: ahmet5633/indirimani
         branch: main
-      build:
-        builder: nodejs
+      docker:
+        build:
+          context: .
+          dockerfile: Dockerfile
       ports:
         - port: 3000
           protocol: http
