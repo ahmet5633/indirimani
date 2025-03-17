@@ -2,7 +2,7 @@ app:
   name: indirimani
   services:
     - name: web
-      instance_type: nano
+      instance_type: free
       git:
         repository: ahmet5633/indirimani
         branch: main
