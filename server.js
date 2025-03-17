@@ -483,7 +483,7 @@ app.get('/admin', (req, res) => {
 
 // Sunucuyu başlat
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, () => {
     console.log(`Sunucu ${PORT} portunda çalışıyor`);
     console.log(`Ana sayfa: http://localhost:${PORT}`);
     console.log(`Yönetim paneli: http://localhost:${PORT}/admin`);

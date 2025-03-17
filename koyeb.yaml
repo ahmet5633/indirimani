@@ -6,15 +6,15 @@ app:
       git:
         repository: ahmet5633/indirimani
         branch: main
-      docker:
-        build:
-          context: .
-          dockerfile: Dockerfile
-      ports:
-        - port: 3000
-          protocol: http
-      env:
-        - name: NODE_ENV
-          value: production
-        - name: PORT
-          value: "3000" 
+      definition:
+        docker:
+          image: node:18-alpine
+          command: npm start
+          ports:
+            - port: 3000
+              protocol: http
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: PORT
+              value: "3000" 
